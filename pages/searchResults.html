@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Search Results - Verifact</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="../css/searchResults.css">
+        
+        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <div class="header-top">
+                    <h1>🔍 Search Results</h1>
+                    <a href="../index.html" class="btn btn-secondary">← Home</a>
+                </div>
+                
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Search claims..." class="search-input">
+                    <button onclick="performSearch()" class="btn btn-primary">Search</button>
+                    <button onclick="clearSearch()" class="btn btn-secondary">Clear</button>
+                </div>
+            </header>
+
+            <div id="resultsSummary" class="results-summary"></div>
+            
+            <div id="loadingIndicator" class="loading" style="display: none;">
+                <span>Loading claims...</span>
+            </div>
+            
+            <div id="claimsList" class="claims-list"></div>
+        </div>
+
+        <script src="../js/firebase-config.js"></script>
+        <script>
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialQuery = urlParams.get('q') || '';
+            
+            let currentQuery = initialQuery;
+            let allClaims = [];
+            let unsubscribe = null;
+
+            if (initialQuery) {
+                document.getElementById('searchInput').value = initialQuery;
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                setupRealtimeListener();
+            });
+
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+
+            function setupRealtimeListener() {
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                loadingIndicator.style.display = 'block';
+                
+                if (unsubscribe) {
+                    unsubscribe();
+                }
+                
+                unsubscribe = db.collection('claims')
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot((snapshot) => {
+                        loadingIndicator.style.display = 'none';
+                        
+                        allClaims = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        
+                        if (currentQuery) {
+                            const filtered = filterClaims(allClaims, currentQuery);
+                            displayClaims(filtered, `Results for "${currentQuery}"`);
+                        } else {
+                            displayClaims(allClaims, 'All Claims');
+                        }
+                    }, (error) => {
+                        loadingIndicator.style.display = 'none';
+                        console.error('Error listening to claims:', error);
+                        document.getElementById('claimsList').innerHTML = 
+                            '<p class="error">Error loading claims. Please refresh the page.</p>';
+                    });
+            }
+
+            function filterClaims(claims, query) {
+                const q = query.toLowerCase();
+                return claims.filter(claim => {
+                    const textMatch = claim.text?.toLowerCase().includes(q) || false;
+                    const categoryMatch = claim.category?.toLowerCase().includes(q) || false;
+                    return textMatch || categoryMatch;
+                });
+            }
+
+            function performSearch() {
+                const query = document.getElementById('searchInput').value.trim();
+                currentQuery = query;
+                
+                const newUrl = query ? 
+                    `${window.location.pathname}?q=${encodeURIComponent(query)}` : 
+                    window.location.pathname;
+                window.history.pushState({ path: newUrl }, '', newUrl);
+                
+                if (query) {
+                    const filtered = filterClaims(allClaims, query);
+                    displayClaims(filtered, `Results for "${query}"`);
+                } else {
+                    displayClaims(allClaims, 'All Claims');
+                }
+            }
+
+            function clearSearch() {
+                document.getElementById('searchInput').value = '';
+                currentQuery = '';
+                window.history.pushState({ path: window.location.pathname }, '', window.location.pathname);
+                displayClaims(allClaims, 'All Claims');
+                document.getElementById('searchInput').focus();
+            }
+
+            function displayClaims(claims, title) {
+                const container = document.getElementById('claimsList');
+                const summary = document.getElementById('resultsSummary');
+                
+                summary.innerHTML = `
+                    <div class="summary-info">
+                        <h3>${title}</h3>
+                        <p>Found ${claims.length} claim${claims.length !== 1 ? 's' : ''}</p>
+                    </div>
+                `;
+                
+                if (claims.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <p>No claims found</p>
+                            <p class="hint">Try adjusting your search terms or <a href="../pages/addClaim.html">add a new claim</a></p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = claims.map(claim => `
+                    <div class="claim-card" data-id="${claim.id}">
+                        <div class="claim-content">
+                            <p class="claim-text">${escapeHtml(claim.text)}</p>
+                            ${claim.category ? `<span class="claim-category">${escapeHtml(claim.category)}</span>` : ''}
+                            <div class="claim-meta">
+                                <span class="claim-date">${formatDate(claim.createdAt)}</span>
+                                ${claim.updatedAt && claim.updatedAt !== claim.createdAt ? 
+                                    `<span class="claim-updated">(updated ${formatDate(claim.updatedAt)})</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="claim-actions">
+                            <button onclick="editClaim('${claim.id}')" class="btn btn-edit">Edit</button>
+                            <button onclick="deleteClaim('${claim.id}')" class="btn btn-delete">Delete</button>
+                        </div>
+                        <div id="edit-form-${claim.id}" class="edit-form" style="display: none;">
+                            <textarea id="edit-input-${claim.id}" rows="3">${escapeHtml(claim.text)}</textarea>
+                            <div class="edit-actions">
+                                <button onclick="saveEdit('${claim.id}')" class="btn btn-primary">Save</button>
+                                <button onclick="cancelEdit('${claim.id}')" class="btn btn-secondary">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            window.editClaim = function(id) {
+                document.getElementById(`edit-form-${id}`).style.display = 'block';
+                document.getElementById(`edit-input-${id}`).focus();
+            }
+
+            window.cancelEdit = function(id) {
+                document.getElementById(`edit-form-${id}`).style.display = 'none';
+            }
+
+            window.saveEdit = async function(id) {
+                const input = document.getElementById(`edit-input-${id}`);
+                const newText = input.value.trim();
+                
+                if (!newText) {
+                    alert('Claim cannot be empty');
+                    return;
+                }
+
+                try {
+                    await db.collection('claims').doc(id).update({
+                        text: newText,
+                        updatedAt: new Date().toISOString()
+                    });
+                    
+                    document.getElementById(`edit-form-${id}`).style.display = 'none';
+                } catch (error) {
+                    console.error('Error updating claim:', error);
+                    alert('Error updating claim. Please try again.');
+                }
+            }
+
+            window.deleteClaim = async function(id) {
+                if (!confirm('Are you sure you want to delete this claim?')) {
+                    return;
+                }
+
+                try {
+                    await db.collection('claims').doc(id).delete();
+                } catch (error) {
+                    console.error('Error deleting claim:', error);
+                    alert('Error deleting claim. Please try again.');
+                }
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function formatDate(dateString) {
+                if (!dateString) return 'Unknown date';
+                const date = new Date(dateString);
+                return date.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            window.addEventListener('beforeunload', function() {
+                if (unsubscribe) {
+                    unsubscribe();
+                }
+            });
+        </script>
+    </body>
+</html>

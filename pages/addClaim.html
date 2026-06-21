@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Add Claim - Verifact</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="../css/addClaim.css">
+        
+        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Add New Claim</h1>
+                <a href="../index.html" class="btn btn-secondary">← Back to Home</a>
+            </div>
+
+            <div class="form-container">
+                <form id="claimForm">
+                    <div class="form-group">
+                        <label for="claimInput">Enter your claim:</label>
+                        <textarea id="claimInput" placeholder="Type your claim here..." rows="4"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoryInput">Category (optional):</label>
+                        <input type="text" id="categoryInput" placeholder="e.g., Politics, Science, Health">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Submit Claim</button>
+                        <button type="reset" class="btn btn-secondary">Clear</button>
+                    </div>
+                </form>
+                
+                <div id="message" class="message"></div>
+            </div>
+        </div>
+
+        <script src="../js/firebase-config.js"></script>
+        <script>
+            document.getElementById('claimForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const textInput = document.getElementById('claimInput');
+                const categoryInput = document.getElementById('categoryInput');
+                const message = document.getElementById('message');
+                
+                const text = textInput.value.trim();
+                const category = categoryInput.value.trim();
+                
+                if (!text) {
+                    message.innerHTML = '<span class="error">Please enter a claim.</span>';
+                    return;
+                }
+
+                try {
+                    const claimData = {
+                        text: text,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    if (category) {
+                        claimData.category = category;
+                    }
+                    
+                    await db.collection('claims').add(claimData);
+                    
+                    message.innerHTML = '<span class="success">Claim added successfully!</span>';
+                    textInput.value = '';
+                    categoryInput.value = '';
+                    
+                    setTimeout(() => {
+                        window.location.href = '../index.html';
+                    }, 1500);
+                } catch (error) {
+                    console.error('Error adding claim:', error);
+                    message.innerHTML = '<span class="error">Error adding claim. Please try again.</span>';
+                }
+            });
+
+            document.getElementById('claimInput').focus();
+        </script>
+    </body>
+</html>
