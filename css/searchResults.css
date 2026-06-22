@@ -1,0 +1,253 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #E8DCB9;
+    min-height: 100vh;
+    padding: 40px;
+    padding-bottom: 100px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.search-header {
+    margin-bottom: 30px;
+}
+
+.search-form {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.search-input {
+    flex: 1;
+    padding: 14px 20px;
+    font-size: 16px;
+    color: #1a1a1a;
+    background: #f5f5f5;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    outline: none;
+}
+
+.search-input::placeholder {
+    color: #999;
+}
+
+.search-input:focus {
+    background: #ffffff;
+    border-color: #1a1a1a;
+}
+
+.search-btn {
+    padding: 14px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #ffffff;
+    background: #1a1a1a;
+    border: 2px solid #1a1a1a;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.claims-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.claim-card {
+    background: #f5f5f5;
+    border-radius: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+}
+
+.claim-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.claim-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 2;
+    min-width: 200px;
+}
+
+.fact-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.fact-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1a1a1a;
+    word-break: break-word;
+}
+
+.claim-source {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 150px;
+}
+
+.source-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.source-text {
+    font-size: 14px;
+    color: #666;
+    word-break: break-word;
+}
+
+.claim-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.action-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #666;
+    font-size: 14px;
+}
+
+.edit-form {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.edit-form textarea {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    color: #1a1a1a;
+    background: #ffffff;
+    border: 2px solid #1a1a1a;
+    border-radius: 8px;
+    resize: vertical;
+    margin-bottom: 10px;
+    outline: none;
+}
+
+.edit-source-input {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    color: #1a1a1a;
+    background: #ffffff;
+    border: 2px solid #1a1a1a;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    outline: none;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.save-btn {
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    background: #1a1a1a;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.cancel-btn {
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    background: transparent;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.add-claim-fixed {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+
+.add-claim-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 14px 32px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+    background: #1a1a1a;
+    border: 2px solid #1a1a1a;
+    border-radius: 12px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-state p {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.empty-state .hint {
+    font-size: 14px;
+    color: #999;
+}
+
+.empty-state a {
+    color: #1a1a1a;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.error {
+    color: #e53e3e;
+    padding: 20px;
+    text-align: center;
+    background: #fff5f5;
+    border-radius: 8px;
+}

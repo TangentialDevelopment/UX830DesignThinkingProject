@@ -1,0 +1,277 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #E8DCB9;
+    min-height: 100vh;
+    padding: 40px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 30px;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a1a1a;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.loading-message {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.claim-detail {
+    background: #ffffff;
+    border-radius: 12px;
+}
+
+.claim-header {
+    margin-bottom: 20px;
+}
+
+.claim-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.4;
+}
+
+.claim-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.meta-item {
+    font-size: 14px;
+    color: #666;
+}
+
+.sources-container {
+    margin-top: 20px;
+}
+
+.sources-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+}
+
+.no-sources-text {
+    color: #999;
+    text-align: center;
+    padding: 40px 20px;
+    background: #f5f5f5;
+    border-radius: 12px;
+}
+
+.source-section {
+    background: #f5f5f5;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.source-header {
+    margin-bottom: 12px;
+}
+
+.source-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.source-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.source-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.count-row {
+    gap: 12px;
+}
+
+.source-field-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    min-width: 60px;
+}
+
+.source-link {
+    color: #1a1a1a;
+    text-decoration: underline;
+    word-break: break-all;
+    font-size: 14px;
+}
+
+.count-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.count-btn {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #1a1a1a;
+    background: transparent;
+    color: #1a1a1a;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.source-count {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    min-width: 30px;
+    text-align: center;
+}
+
+.comment-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.comment-header {
+    margin-bottom: 10px;
+}
+
+.comment-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+}
+
+.comments {
+    margin-bottom: 10px;
+}
+
+.comment-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #ffffff;
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+
+.comment-text {
+    font-size: 14px;
+    color: #1a1a1a;
+    flex: 1;
+}
+
+.delete-comment-btn {
+    background: transparent;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0 4px;
+}
+
+.no-comments {
+    font-size: 14px;
+    color: #999;
+    padding: 8px 0;
+}
+
+.add-comment {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.comment-input {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: #1a1a1a;
+    background: #ffffff;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    outline: none;
+}
+
+.comment-input:focus {
+    border-color: #1a1a1a;
+}
+
+.add-comment-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    background: #1a1a1a;
+    border: 2px solid #1a1a1a;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.add-source-section-bottom {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.add-source-btn-bottom {
+    display: inline-block;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #ffffff;
+    background: #1a1a1a;
+    border: 2px solid #1a1a1a;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.error {
+    color: #e53e3e;
+    padding: 20px;
+    text-align: center;
+    background: #fff5f5;
+    border-radius: 8px;
+}

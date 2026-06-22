@@ -6,6 +6,7 @@
         <title>Add Claim - Verifact</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="../css/index.css">
         <link rel="stylesheet" href="../css/addClaim.css">
         
         <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -13,66 +14,72 @@
     </head>
     <body>
         <div class="container">
-            <div class="header">
-                <h1>Add New Claim</h1>
-                <a href="../index.html" class="btn btn-secondary">← Back to Home</a>
+            <div class="top-bar">
+                <a href="../index.html" class="back-btn">
+                    Back
+                </a>
             </div>
 
-            <div class="form-container">
-                <form id="claimForm">
-                    <div class="form-group">
-                        <label for="claimInput">Enter your claim:</label>
-                        <textarea id="claimInput" placeholder="Type your claim here..." rows="4"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="categoryInput">Category (optional):</label>
-                        <input type="text" id="categoryInput" placeholder="e.g., Politics, Science, Health">
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Submit Claim</button>
-                        <button type="reset" class="btn btn-secondary">Clear</button>
-                    </div>
-                </form>
-                
-                <div id="message" class="message"></div>
+            <h1 class="page-title">Add Claim</h1>
+
+            <div class="input-section">
+                <label class="input-label">Claim</label>
+                <textarea id="claimInput" placeholder="Enter your claim..." rows="4"></textarea>
             </div>
+
+            <div class="input-section">
+                <label class="input-label">Source</label>
+                <input type="text" id="sourceInput" placeholder="Enter source URL or reference..." class="text-input">
+            </div>
+
+            <div class="submit-section">
+                <button onclick="addClaim()" class="submit-btn">
+                    Submit Claim
+                </button>
+            </div>
+
+            <div id="message" class="message"></div>
         </div>
 
         <script src="../js/firebase-config.js"></script>
         <script>
-            document.getElementById('claimForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const textInput = document.getElementById('claimInput');
-                const categoryInput = document.getElementById('categoryInput');
+            async function addClaim() {
+                const claimInput = document.getElementById('claimInput');
+                const sourceInput = document.getElementById('sourceInput');
                 const message = document.getElementById('message');
                 
-                const text = textInput.value.trim();
-                const category = categoryInput.value.trim();
+                const claim = claimInput.value.trim();
+                const source = sourceInput.value.trim();
                 
-                if (!text) {
-                    message.innerHTML = '<span class="error">Please enter a claim.</span>';
+                if (!claim) {
+                    message.innerHTML = '<span class="error">Please enter a claim and fact.</span>';
+                    setTimeout(() => { message.innerHTML = ''; }, 3000);
                     return;
                 }
 
+                if (!source) {
+                    message.innerHTML = '<span class="error">Please enter a source.</span>';
+                    setTimeout(() => { message.innerHTML = ''; }, 3000);
+                    return;
+                }
+
+                const fullClaim = `${claim}\n\nSource: ${source}`;
+
                 try {
                     const claimData = {
-                        text: text,
+                        text: fullClaim,
+                        claim: claim,
+                        source: source,
                         createdAt: new Date().toISOString(),
                         updatedAt: new Date().toISOString()
                     };
                     
-                    if (category) {
-                        claimData.category = category;
-                    }
-                    
                     await db.collection('claims').add(claimData);
                     
                     message.innerHTML = '<span class="success">Claim added successfully!</span>';
-                    textInput.value = '';
-                    categoryInput.value = '';
+                    
+                    claimInput.value = '';
+                    sourceInput.value = '';
                     
                     setTimeout(() => {
                         window.location.href = '../index.html';
@@ -81,9 +88,29 @@
                     console.error('Error adding claim:', error);
                     message.innerHTML = '<span class="error">Error adding claim. Please try again.</span>';
                 }
-            });
+            }
 
             document.getElementById('claimInput').focus();
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    addClaim();
+                }
+            });
+
+            document.getElementById('claimInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    document.getElementById('sourceInput').focus();
+                }
+            });
+
+            document.getElementById('sourceInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addClaim();
+                }
+            });
         </script>
     </body>
 </html>

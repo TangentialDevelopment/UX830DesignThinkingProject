@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Claim Detail - Verifact</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="../css/claimDetail.css">
+        
+        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="top-bar">
+                <a href="searchResults.html" class="back-btn">
+                    Back
+                </a>
+            </div>
+
+            <div id="claimContent">
+                <div id="loadingMessage" class="loading-message">Loading claim...</div>
+            </div>
+        </div>
+
+        <script src="../js/firebase-config.js"></script>
+        <script>
+            const urlParams = new URLSearchParams(window.location.search);
+            const claimId = urlParams.get('id');
+
+            document.addEventListener('DOMContentLoaded', function() {
+                if (claimId) {
+                    loadClaim(claimId);
+                } else {
+                    document.getElementById('claimContent').innerHTML = '<p class="error">No claim ID provided.</p>';
+                }
+            });
+
+            async function loadClaim(id) {
+                try {
+                    const doc = await db.collection('claims').doc(id).get();
+                    
+                    if (!doc.exists) {
+                        document.getElementById('claimContent').innerHTML = '<p class="error">Claim not found.</p>';
+                        return;
+                    }
+
+                    const claim = { id: doc.id, ...doc.data() };
+                    displayClaim(claim);
+                } catch (error) {
+                    console.error('Error loading claim:', error);
+                    document.getElementById('claimContent').innerHTML = '<p class="error">Error loading claim.</p>';
+                }
+            }
+
+            function displayClaim(claim) {
+                const container = document.getElementById('claimContent');
+                
+                let sourcesHtml = '';
+                if (claim.sources && claim.sources.length > 0) {
+                    sourcesHtml = claim.sources.map((source, index) => `
+                        <div class="source-section" data-source-index="${index}">
+                            <div class="source-header">
+                                <span class="source-label">Source ${index + 1}</span>
+                            </div>
+                            <div class="source-content">
+                                <div class="source-row">
+                                    <span class="source-field-label">Link</span>
+                                    <a href="${source.link || '#'}" class="source-link" target="_blank">${source.link || 'No link'}</a>
+                                </div>
+                                <div class="source-row count-row">
+                                    <span class="source-field-label">Count</span>
+                                    <div class="count-control">
+                                        <button onclick="updateCount('${claim.id}', ${index}, 'count', -1)" class="count-btn">-</button>
+                                        <span class="source-count" id="count-${index}">${source.count || '0'}</span>
+                                        <button onclick="updateCount('${claim.id}', ${index}, 'count', 1)" class="count-btn">+</button>
+                                    </div>
+                                </div>
+                                <div class="source-row count-row">
+                                    <span class="source-field-label">Count</span>
+                                    <div class="count-control">
+                                        <button onclick="updateCount('${claim.id}', ${index}, 'count2', -1)" class="count-btn">-</button>
+                                        <span class="source-count" id="count2-${index}">${source.count2 || '0'}</span>
+                                        <button onclick="updateCount('${claim.id}', ${index}, 'count2', 1)" class="count-btn">+</button>
+                                    </div>
+                                </div>
+                                <div class="comment-section">
+                                    <div class="comment-header">
+                                        <span class="comment-label">Comment section by source</span>
+                                    </div>
+                                    <div class="comments">
+                                        ${source.comments && source.comments.length > 0 ? 
+                                            source.comments.map(comment => `
+                                                <div class="comment-item">
+                                                    <span class="comment-text">${escapeHtml(comment)}</span>
+                                                    <button onclick="deleteComment('${claim.id}', ${index}, '${escapeHtml(comment)}')" class="delete-comment-btn">×</button>
+                                                </div>
+                                            `).join('') : 
+                                            '<p class="no-comments">No comments yet.</p>'
+                                        }
+                                    </div>
+                                    <div class="add-comment">
+                                        <input type="text" class="comment-input" placeholder="Add comment" id="comment-input-${index}">
+                                        <button onclick="addComment('${claim.id}', ${index})" class="add-comment-btn">Add comment</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                container.innerHTML = `
+                    <div class="claim-detail">
+                        <div class="claim-header">
+                            <h1 class="claim-title">${escapeHtml(claim.claim || claim.text || 'No claim text')}</h1>
+                        </div>
+                        
+                        <div class="claim-meta">
+                            <span class="meta-item">Created: ${new Date(claim.createdAt).toLocaleString()}</span>
+                            ${claim.updatedAt && claim.updatedAt !== claim.createdAt ? 
+                                `<span class="meta-item">Updated: ${new Date(claim.updatedAt).toLocaleString()}</span>` : ''
+                            }
+                        </div>
+
+                        <div class="sources-container">
+                            <h2 class="sources-title">Sources</h2>
+                            ${sourcesHtml || '<p class="no-sources-text">No sources added yet.</p>'}
+                        </div>
+
+                        <div class="add-source-section-bottom">
+                            <a href="addSource.html?id=${claim.id}" class="add-source-btn-bottom">Add Source</a>
+                        </div>
+                    </div>
+                `;
+            }
+
+            async function updateCount(claimId, sourceIndex, field, change) {
+                try {
+                    const doc = await db.collection('claims').doc(claimId).get();
+                    const claim = doc.data();
+                    
+                    if (!claim.sources || !claim.sources[sourceIndex]) {
+                        return;
+                    }
+                    
+                    let currentValue = parseInt(claim.sources[sourceIndex][field]) || 0;
+                    let newValue = currentValue + change;
+                    
+                    if (newValue < 0) {
+                        newValue = 0;
+                    }
+                    
+                    claim.sources[sourceIndex][field] = newValue.toString();
+                    
+                    await db.collection('claims').doc(claimId).update({
+                        sources: claim.sources
+                    });
+                    
+                    const countElement = document.getElementById(`${field}-${sourceIndex}`);
+                    if (countElement) {
+                        countElement.textContent = newValue;
+                    }
+                } catch (error) {
+                    console.error('Error updating count:', error);
+                    alert('Error updating count.');
+                }
+            }
+
+            async function addComment(claimId, sourceIndex) {
+                const input = document.getElementById(`comment-input-${sourceIndex}`);
+                const comment = input.value.trim();
+                
+                if (!comment) {
+                    alert('Please enter a comment.');
+                    return;
+                }
+
+                try {
+                    const doc = await db.collection('claims').doc(claimId).get();
+                    const claim = doc.data();
+                    
+                    if (!claim.sources) {
+                        claim.sources = [];
+                    }
+                    
+                    if (!claim.sources[sourceIndex]) {
+                        claim.sources[sourceIndex] = {};
+                    }
+                    
+                    if (!claim.sources[sourceIndex].comments) {
+                        claim.sources[sourceIndex].comments = [];
+                    }
+                    
+                    claim.sources[sourceIndex].comments.push(comment);
+                    
+                    await db.collection('claims').doc(claimId).update({
+                        sources: claim.sources
+                    });
+                    
+                    input.value = '';
+                    loadClaim(claimId);
+                } catch (error) {
+                    console.error('Error adding comment:', error);
+                    alert('Error adding comment.');
+                }
+            }
+
+            async function deleteComment(claimId, sourceIndex, commentText) {
+                if (!confirm('Delete this comment?')) {
+                    return;
+                }
+
+                try {
+                    const doc = await db.collection('claims').doc(claimId).get();
+                    const claim = doc.data();
+                    
+                    if (!claim.sources || !claim.sources[sourceIndex] || !claim.sources[sourceIndex].comments) {
+                        return;
+                    }
+                    
+                    const commentIndex = claim.sources[sourceIndex].comments.indexOf(commentText);
+                    if (commentIndex !== -1) {
+                        claim.sources[sourceIndex].comments.splice(commentIndex, 1);
+                        await db.collection('claims').doc(claimId).update({
+                            sources: claim.sources
+                        });
+                        loadClaim(claimId);
+                    }
+                } catch (error) {
+                    console.error('Error deleting comment:', error);
+                    alert('Error deleting comment.');
+                }
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        </script>
+    </body>
+</html>

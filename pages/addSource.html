@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Add Source - Verifact</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="../css/addSource.css">
+        
+        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="top-bar">
+                <a href="javascript:history.back()" class="back-btn">
+                    Back
+                </a>
+            </div>
+
+            <h1 class="page-title">Add Source</h1>
+
+            <div class="form-container">
+                <div class="input-section">
+                    <label class="input-label">Add link</label>
+                    <input type="text" id="sourceLink" placeholder="Enter source URL..." class="text-input">
+                </div>
+
+                <div class="submit-section">
+                    <button onclick="addSource()" class="submit-btn">
+                        Add Source
+                    </button>
+                </div>
+
+                <div id="message" class="message"></div>
+            </div>
+        </div>
+
+        <script src="../js/firebase-config.js"></script>
+        <script>
+            const urlParams = new URLSearchParams(window.location.search);
+            const claimId = urlParams.get('id');
+
+            document.addEventListener('DOMContentLoaded', function() {
+                if (!claimId) {
+                    document.getElementById('message').innerHTML = '<span class="error">No claim ID provided.</span>';
+                }
+                document.getElementById('sourceLink').focus();
+            });
+
+            async function addSource() {
+                const linkInput = document.getElementById('sourceLink');
+                const message = document.getElementById('message');
+                const link = linkInput.value.trim();
+                
+                if (!link) {
+                    message.innerHTML = '<span class="error">Please enter a source link.</span>';
+                    setTimeout(() => { message.innerHTML = ''; }, 3000);
+                    return;
+                }
+
+                if (!claimId) {
+                    message.innerHTML = '<span class="error">No claim ID provided.</span>';
+                    return;
+                }
+
+                try {
+                    const doc = await db.collection('claims').doc(claimId).get();
+                    
+                    if (!doc.exists) {
+                        message.innerHTML = '<span class="error">Claim not found.</span>';
+                        return;
+                    }
+
+                    const claim = doc.data();
+                    
+                    if (!claim.sources) {
+                        claim.sources = [];
+                    }
+                    
+                    claim.sources.push({
+                        link: link,
+                        count: '0',
+                        count2: '0',
+                        comments: []
+                    });
+                    
+                    await db.collection('claims').doc(claimId).update({
+                        sources: claim.sources
+                    });
+                    
+                    message.innerHTML = '<span class="success">Source added successfully!</span>';
+                    linkInput.value = '';
+                    
+                    setTimeout(() => {
+                        window.location.href = `claimDetail.html?id=${claimId}`;
+                    }, 1500);
+                } catch (error) {
+                    console.error('Error adding source:', error);
+                    message.innerHTML = '<span class="error">Error adding source. Please try again.</span>';
+                }
+            }
+
+            document.getElementById('sourceLink').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addSource();
+                }
+            });
+        </script>
+    </body>
+</html>

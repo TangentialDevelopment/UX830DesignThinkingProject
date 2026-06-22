@@ -13,26 +13,24 @@
     </head>
     <body>
         <div class="container">
-            <header>
-                <div class="header-top">
-                    <h1>🔍 Search Results</h1>
-                    <a href="../index.html" class="btn btn-secondary">← Home</a>
-                </div>
-                
-                <div class="search-bar">
-                    <input type="text" id="searchInput" placeholder="Search claims..." class="search-input">
-                    <button onclick="performSearch()" class="btn btn-primary">Search</button>
-                    <button onclick="clearSearch()" class="btn btn-secondary">Clear</button>
-                </div>
-            </header>
+            <div class="search-header">
+                <form id="searchForm" class="search-form">
+                    <input type="text" id="searchInput" placeholder="Search Here" class="search-input">
+                    <button type="submit" class="search-btn">Search</button>
+                </form>
+            </div>
 
-            <div id="resultsSummary" class="results-summary"></div>
-            
             <div id="loadingIndicator" class="loading" style="display: none;">
                 <span>Loading claims...</span>
             </div>
             
             <div id="claimsList" class="claims-list"></div>
+
+            <div class="add-claim-fixed">
+                <a href="../pages/addClaim.html" class="add-claim-btn">
+                    Add Claim
+                </a>
+            </div>
         </div>
 
         <script src="../js/firebase-config.js"></script>
@@ -52,8 +50,14 @@
                 setupRealtimeListener();
             });
 
+            document.getElementById('searchForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                performSearch();
+            });
+
             document.getElementById('searchInput').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
+                    e.preventDefault();
                     performSearch();
                 }
             });
@@ -78,9 +82,9 @@
                         
                         if (currentQuery) {
                             const filtered = filterClaims(allClaims, currentQuery);
-                            displayClaims(filtered, `Results for "${currentQuery}"`);
+                            displayClaims(filtered);
                         } else {
-                            displayClaims(allClaims, 'All Claims');
+                            displayClaims(allClaims);
                         }
                     }, (error) => {
                         loadingIndicator.style.display = 'none';
@@ -93,9 +97,10 @@
             function filterClaims(claims, query) {
                 const q = query.toLowerCase();
                 return claims.filter(claim => {
+                    const claimMatch = claim.claim?.toLowerCase().includes(q) || false;
                     const textMatch = claim.text?.toLowerCase().includes(q) || false;
-                    const categoryMatch = claim.category?.toLowerCase().includes(q) || false;
-                    return textMatch || categoryMatch;
+                    const sourceMatch = claim.source?.toLowerCase().includes(q) || false;
+                    return claimMatch || textMatch || sourceMatch;
                 });
             }
 
@@ -110,30 +115,14 @@
                 
                 if (query) {
                     const filtered = filterClaims(allClaims, query);
-                    displayClaims(filtered, `Results for "${query}"`);
+                    displayClaims(filtered);
                 } else {
-                    displayClaims(allClaims, 'All Claims');
+                    displayClaims(allClaims);
                 }
             }
 
-            function clearSearch() {
-                document.getElementById('searchInput').value = '';
-                currentQuery = '';
-                window.history.pushState({ path: window.location.pathname }, '', window.location.pathname);
-                displayClaims(allClaims, 'All Claims');
-                document.getElementById('searchInput').focus();
-            }
-
-            function displayClaims(claims, title) {
+            function displayClaims(claims) {
                 const container = document.getElementById('claimsList');
-                const summary = document.getElementById('resultsSummary');
-                
-                summary.innerHTML = `
-                    <div class="summary-info">
-                        <h3>${title}</h3>
-                        <p>Found ${claims.length} claim${claims.length !== 1 ? 's' : ''}</p>
-                    </div>
-                `;
                 
                 if (claims.length === 0) {
                     container.innerHTML = `
@@ -146,43 +135,54 @@
                 }
                 
                 container.innerHTML = claims.map(claim => `
-                    <div class="claim-card" data-id="${claim.id}">
-                        <div class="claim-content">
-                            <p class="claim-text">${escapeHtml(claim.text)}</p>
-                            ${claim.category ? `<span class="claim-category">${escapeHtml(claim.category)}</span>` : ''}
-                            <div class="claim-meta">
-                                <span class="claim-date">${formatDate(claim.createdAt)}</span>
-                                ${claim.updatedAt && claim.updatedAt !== claim.createdAt ? 
-                                    `<span class="claim-updated">(updated ${formatDate(claim.updatedAt)})</span>` : ''}
+                    <div class="claim-card" data-id="${claim.id}" onclick="viewClaim('${claim.id}')">
+                        <div class="claim-row">
+                            <div class="claim-title">
+                                <span class="fact-label">Fact</span>
+                                <span class="fact-text">${escapeHtml(claim.claim || claim.text || 'No claim text')}</span>
+                            </div>
+                            <div class="claim-source">
+                                <span class="source-label">Source</span>
+                                <span class="source-text">${claim.source || 'No source'}</span>
+                            </div>
+                            <div class="claim-actions">
+                                <button onclick="event.stopPropagation(); editClaim('${claim.id}')" class="action-btn edit-btn">Edit</button>
+                                <button onclick="event.stopPropagation(); deleteClaim('${claim.id}')" class="action-btn delete-btn">Delete</button>
                             </div>
                         </div>
-                        <div class="claim-actions">
-                            <button onclick="editClaim('${claim.id}')" class="btn btn-edit">Edit</button>
-                            <button onclick="deleteClaim('${claim.id}')" class="btn btn-delete">Delete</button>
-                        </div>
-                        <div id="edit-form-${claim.id}" class="edit-form" style="display: none;">
-                            <textarea id="edit-input-${claim.id}" rows="3">${escapeHtml(claim.text)}</textarea>
+                        <div id="edit-form-${claim.id}" class="edit-form" style="display: none;" onclick="event.stopPropagation();">
+                            <textarea id="edit-input-${claim.id}" rows="2">${escapeHtml(claim.claim || claim.text || '')}</textarea>
+                            <input type="text" id="edit-source-${claim.id}" value="${escapeHtml(claim.source || '')}" placeholder="Source" class="edit-source-input">
                             <div class="edit-actions">
-                                <button onclick="saveEdit('${claim.id}')" class="btn btn-primary">Save</button>
-                                <button onclick="cancelEdit('${claim.id}')" class="btn btn-secondary">Cancel</button>
+                                <button onclick="saveEdit('${claim.id}')" class="save-btn">Save</button>
+                                <button onclick="cancelEdit('${claim.id}')" class="cancel-btn">Cancel</button>
                             </div>
                         </div>
                     </div>
                 `).join('');
             }
 
+            function viewClaim(id) {
+                window.location.href = `claimDetail.html?id=${id}`;
+            }
+
             window.editClaim = function(id) {
+                event.stopPropagation();
                 document.getElementById(`edit-form-${id}`).style.display = 'block';
                 document.getElementById(`edit-input-${id}`).focus();
             }
 
             window.cancelEdit = function(id) {
+                event.stopPropagation();
                 document.getElementById(`edit-form-${id}`).style.display = 'none';
             }
 
             window.saveEdit = async function(id) {
+                event.stopPropagation();
                 const input = document.getElementById(`edit-input-${id}`);
+                const sourceInput = document.getElementById(`edit-source-${id}`);
                 const newText = input.value.trim();
+                const newSource = sourceInput.value.trim();
                 
                 if (!newText) {
                     alert('Claim cannot be empty');
@@ -190,10 +190,17 @@
                 }
 
                 try {
-                    await db.collection('claims').doc(id).update({
-                        text: newText,
+                    const updateData = {
+                        claim: newText,
+                        text: `${newText}\n\nSource: ${newSource}`,
                         updatedAt: new Date().toISOString()
-                    });
+                    };
+                    
+                    if (newSource) {
+                        updateData.source = newSource;
+                    }
+                    
+                    await db.collection('claims').doc(id).update(updateData);
                     
                     document.getElementById(`edit-form-${id}`).style.display = 'none';
                 } catch (error) {
@@ -203,6 +210,7 @@
             }
 
             window.deleteClaim = async function(id) {
+                event.stopPropagation();
                 if (!confirm('Are you sure you want to delete this claim?')) {
                     return;
                 }
@@ -216,21 +224,10 @@
             }
 
             function escapeHtml(text) {
+                if (!text) return '';
                 const div = document.createElement('div');
                 div.textContent = text;
                 return div.innerHTML;
-            }
-
-            function formatDate(dateString) {
-                if (!dateString) return 'Unknown date';
-                const date = new Date(dateString);
-                return date.toLocaleString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
             }
 
             window.addEventListener('beforeunload', function() {
