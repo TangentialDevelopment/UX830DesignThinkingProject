@@ -77,7 +77,7 @@
                 if (allSources && allSources.length > 0) {
                     for (var s = 0; s < allSources.length; s++) {
                         var source = allSources[s];
-                        var sourceLabel = source.isInitial ? 'Initial Source' : 'Source ' + s;
+                        var sourceLabel = source.isInitial ? 'Initial Source' : 'Source ' + (s);
                         var sourceId = source.id || 'initial_' + claim.id;
                         
                         var comments = [];
@@ -101,7 +101,11 @@
                             commentsHtml = '<p class="no-comments">No comments yet.</p>';
                         }
                         
-                        var linkDisplay = source.link || 'No link';
+                        // Get the link - handle both string and object
+                        var linkDisplay = 'No link';
+                        if (source.link) {
+                            linkDisplay = source.link;
+                        }
                         
                         sourcesHtml += '<div class="source-section" data-source-index="' + s + '">';
                         sourcesHtml += '<div class="source-header">';
