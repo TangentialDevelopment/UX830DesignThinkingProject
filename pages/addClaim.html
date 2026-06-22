@@ -30,7 +30,7 @@
             </div>
 
             <div class="submit-section">
-                <button onclick="addClaim()" class="submit-btn">
+                <button id="submitBtn" class="submit-btn">
                     Submit Claim
                 </button>
             </div>
@@ -40,23 +40,24 @@
 
         <script src="../js/storage.js"></script>
         <script>
-            async function addClaim() {
-                const claimInput = document.getElementById('claimInput');
-                const sourceInput = document.getElementById('sourceInput');
-                const message = document.getElementById('message');
-                
+            const claimInput = document.getElementById('claimInput');
+            const sourceInput = document.getElementById('sourceInput');
+            const message = document.getElementById('message');
+            const submitBtn = document.getElementById('submitBtn');
+
+            function addClaim() {
                 const claim = claimInput.value.trim();
                 const source = sourceInput.value.trim();
                 
+                message.innerHTML = '';
+                
                 if (!claim) {
                     message.innerHTML = '<span class="error">Please enter a claim and fact.</span>';
-                    setTimeout(() => { message.innerHTML = ''; }, 3000);
                     return;
                 }
 
                 if (!source) {
                     message.innerHTML = '<span class="error">Please enter a source.</span>';
-                    setTimeout(() => { message.innerHTML = ''; }, 3000);
                     return;
                 }
 
@@ -67,43 +68,51 @@
                         source: source
                     };
                     
-                    const newClaim = addClaim(claimData);
+                    const newClaim = window.addClaim(claimData);
                     
-                    message.innerHTML = '<span class="success">Claim added successfully!</span>';
+                    message.innerHTML = '<span class="success">Claim added successfully.</span>';
                     
                     claimInput.value = '';
                     sourceInput.value = '';
                     
-                    setTimeout(() => {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Adding...';
+                    
+                    setTimeout(function() {
                         window.location.href = '../index.html';
                     }, 1500);
                 } catch (error) {
                     console.error('Error adding claim:', error);
                     message.innerHTML = '<span class="error">Error adding claim. Please try again.</span>';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Claim';
                 }
             }
 
-            document.getElementById('claimInput').focus();
+            submitBtn.addEventListener('click', addClaim);
 
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
                     addClaim();
                 }
             });
 
-            document.getElementById('claimInput').addEventListener('keydown', function(e) {
+            claimInput.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    document.getElementById('sourceInput').focus();
+                    sourceInput.focus();
                 }
             });
 
-            document.getElementById('sourceInput').addEventListener('keydown', function(e) {
+            sourceInput.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     addClaim();
                 }
             });
+
+            claimInput.focus();
         </script>
     </body>
 </html>

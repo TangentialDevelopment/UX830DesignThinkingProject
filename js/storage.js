@@ -17,7 +17,8 @@ function initStorage() {
 }
 
 function getClaims() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.CLAIMS)) || [];
+    const data = localStorage.getItem(STORAGE_KEYS.CLAIMS);
+    return data ? JSON.parse(data) : [];
 }
 
 function saveClaims(claims) {
@@ -25,7 +26,8 @@ function saveClaims(claims) {
 }
 
 function getSources() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.SOURCES)) || [];
+    const data = localStorage.getItem(STORAGE_KEYS.SOURCES);
+    return data ? JSON.parse(data) : [];
 }
 
 function saveSources(sources) {
@@ -33,7 +35,8 @@ function saveSources(sources) {
 }
 
 function getComments() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMENTS)) || [];
+    const data = localStorage.getItem(STORAGE_KEYS.COMMENTS);
+    return data ? JSON.parse(data) : [];
 }
 
 function saveComments(comments) {
@@ -73,7 +76,7 @@ function deleteClaim(id) {
     const claims = getClaims();
     const filtered = claims.filter(claim => claim.id !== id);
     saveClaims(filtered);
-
+    
     const sources = getSources();
     const filteredSources = sources.filter(source => source.claimId !== id);
     saveSources(filteredSources);
@@ -96,7 +99,6 @@ function addSource(claimId, sourceData) {
         ...sourceData,
         count: '0',
         count2: '0',
-        comments: [],
         createdAt: new Date().toISOString()
     };
     sources.push(newSource);

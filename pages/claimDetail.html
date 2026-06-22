@@ -6,6 +6,7 @@
         <title>Claim Detail - Verifact</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="../css/index.css">
         <link rel="stylesheet" href="../css/claimDetail.css">
     </head>
     <body>
@@ -94,7 +95,7 @@
                                                 comments.map(comment => `
                                                     <div class="comment-item">
                                                         <span class="comment-text">${escapeHtml(comment.text)}</span>
-                                                        <button onclick="deleteComment('${comment.id}')" class="delete-comment-btn">×</button>
+                                                        <button onclick="deleteComment('${comment.id}')" class="delete-comment-btn">x</button>
                                                     </div>
                                                 `).join('') : 
                                                 '<p class="no-comments">No comments yet.</p>'
@@ -138,7 +139,8 @@
 
             function updateCount(claimId, sourceId, field, change) {
                 try {
-                    const source = getSourcesForClaim(claimId).find(s => s.id === sourceId);
+                    const sources = getSourcesForClaim(claimId);
+                    const source = sources.find(s => s.id === sourceId);
                     if (!source) return;
                     
                     let currentValue = parseInt(source[field]) || 0;
