@@ -1,3 +1,5 @@
+// js/storage.js
+
 const STORAGE_KEYS = {
     CLAIMS: 'verifact_claims',
     SOURCES: 'verifact_sources',
@@ -43,7 +45,7 @@ function saveComments(comments) {
     localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(comments));
 }
 
-function addClaim(claimData) {
+function saveClaimToStorage(claimData) {
     const claims = getClaims();
     const newClaim = {
         id: Date.now().toString(),
@@ -158,7 +160,7 @@ initStorage();
 
 window.getClaims = getClaims;
 window.getClaimById = getClaimById;
-window.addClaim = addClaim;
+window.saveClaimToStorage = saveClaimToStorage;
 window.updateClaim = updateClaim;
 window.deleteClaim = deleteClaim;
 window.getSourcesForClaim = getSourcesForClaim;

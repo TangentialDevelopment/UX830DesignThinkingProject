@@ -40,14 +40,14 @@
 
         <script src="../js/storage.js"></script>
         <script>
-            const claimInput = document.getElementById('claimInput');
-            const sourceInput = document.getElementById('sourceInput');
-            const message = document.getElementById('message');
-            const submitBtn = document.getElementById('submitBtn');
+            var claimInput = document.getElementById('claimInput');
+            var sourceInput = document.getElementById('sourceInput');
+            var message = document.getElementById('message');
+            var submitBtn = document.getElementById('submitBtn');
 
             function addClaim() {
-                const claim = claimInput.value.trim();
-                const source = sourceInput.value.trim();
+                var claim = claimInput.value.trim();
+                var source = sourceInput.value.trim();
                 
                 message.innerHTML = '';
                 
@@ -62,15 +62,15 @@
                 }
 
                 try {
-                    const claimData = {
+                    var claimData = {
                         claim: claim,
                         text: claim,
                         source: source
                     };
                     
-                    const newClaim = window.addClaim(claimData);
+                    var newClaim = window.saveClaimToStorage(claimData);
                     
-                    message.innerHTML = '<span class="success">Claim added successfully.</span>';
+                    message.innerHTML = '<span class="success">Claim added successfully!</span>';
                     
                     claimInput.value = '';
                     sourceInput.value = '';

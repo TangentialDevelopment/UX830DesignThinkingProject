@@ -33,10 +33,10 @@
 
         <script src="../js/storage.js"></script>
         <script>
-            const urlParams = new URLSearchParams(window.location.search);
-            const initialQuery = urlParams.get('q') || '';
+            var urlParams = new URLSearchParams(window.location.search);
+            var initialQuery = urlParams.get('q') || '';
             
-            let currentQuery = initialQuery;
+            var currentQuery = initialQuery;
 
             if (initialQuery) {
                 document.getElementById('searchInput').value = initialQuery;
@@ -59,15 +59,15 @@
             });
 
             function loadClaims() {
-                const loadingIndicator = document.getElementById('loadingIndicator');
+                var loadingIndicator = document.getElementById('loadingIndicator');
                 loadingIndicator.style.display = 'block';
                 
-                setTimeout(() => {
-                    const claims = getClaims();
+                setTimeout(function() {
+                    var claims = getClaims();
                     loadingIndicator.style.display = 'none';
                     
                     if (currentQuery) {
-                        const filtered = searchClaims(currentQuery);
+                        var filtered = searchClaims(currentQuery);
                         displayClaims(filtered);
                     } else {
                         displayClaims(claims);
@@ -76,11 +76,11 @@
             }
 
             function performSearch() {
-                const query = document.getElementById('searchInput').value.trim();
+                var query = document.getElementById('searchInput').value.trim();
                 currentQuery = query;
                 
-                const newUrl = query ? 
-                    `${window.location.pathname}?q=${encodeURIComponent(query)}` : 
+                var newUrl = query ? 
+                    window.location.pathname + '?q=' + encodeURIComponent(query) : 
                     window.location.pathname;
                 window.history.pushState({ path: newUrl }, '', newUrl);
                 
@@ -88,67 +88,65 @@
             }
 
             function displayClaims(claims) {
-                const container = document.getElementById('claimsList');
+                var container = document.getElementById('claimsList');
                 
                 if (!claims || claims.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <p>No claims found</p>
-                            <p class="hint">Try adjusting your search terms or <a href="../pages/addClaim.html">add a new claim</a></p>
-                        </div>
-                    `;
+                    container.innerHTML = '<div class="empty-state"><p>No claims found</p><p class="hint">Try adjusting your search terms or <a href="../pages/addClaim.html">add a new claim</a></p></div>';
                     return;
                 }
                 
-                container.innerHTML = claims.map(claim => `
-                    <div class="claim-card" data-id="${claim.id}" onclick="viewClaim('${claim.id}')">
-                        <div class="claim-row">
-                            <div class="claim-title">
-                                <span class="fact-label">Fact</span>
-                                <span class="fact-text">${escapeHtml(claim.claim || claim.text || 'No claim text')}</span>
-                            </div>
-                            <div class="claim-source">
-                                <span class="source-label">Source</span>
-                                <span class="source-text">${claim.source || 'No source'}</span>
-                            </div>
-                            <div class="claim-actions">
-                                <button onclick="event.stopPropagation(); editClaim('${claim.id}')" class="action-btn edit-btn">Edit</button>
-                                <button onclick="event.stopPropagation(); deleteClaim('${claim.id}')" class="action-btn delete-btn">Delete</button>
-                            </div>
-                        </div>
-                        <div id="edit-form-${claim.id}" class="edit-form" style="display: none;" onclick="event.stopPropagation();">
-                            <textarea id="edit-input-${claim.id}" rows="2">${escapeHtml(claim.claim || claim.text || '')}</textarea>
-                            <input type="text" id="edit-source-${claim.id}" value="${escapeHtml(claim.source || '')}" placeholder="Source" class="edit-source-input">
-                            <div class="edit-actions">
-                                <button onclick="saveEdit('${claim.id}')" class="save-btn">Save</button>
-                                <button onclick="cancelEdit('${claim.id}')" class="cancel-btn">Cancel</button>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
+                var html = '';
+                for (var i = 0; i < claims.length; i++) {
+                    var claim = claims[i];
+                    html += '<div class="claim-card" data-id="' + claim.id + '" onclick="viewClaim(\'' + claim.id + '\')">';
+                    html += '<div class="claim-row">';
+                    html += '<div class="claim-title">';
+                    html += '<span class="fact-label">Fact</span>';
+                    html += '<span class="fact-text">' + escapeHtml(claim.claim || claim.text || 'No claim text') + '</span>';
+                    html += '</div>';
+                    html += '<div class="claim-source">';
+                    html += '<span class="source-label">Source</span>';
+                    html += '<span class="source-text">' + (claim.source || 'No source') + '</span>';
+                    html += '</div>';
+                    html += '<div class="claim-actions">';
+                    html += '<button onclick="event.stopPropagation(); editClaim(\'' + claim.id + '\')" class="action-btn edit-btn">Edit</button>';
+                    html += '<button onclick="event.stopPropagation(); deleteClaim(\'' + claim.id + '\')" class="action-btn delete-btn">Delete</button>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '<div id="edit-form-' + claim.id + '" class="edit-form" style="display: none;" onclick="event.stopPropagation();">';
+                    html += '<textarea id="edit-input-' + claim.id + '" rows="2">' + escapeHtml(claim.claim || claim.text || '') + '</textarea>';
+                    html += '<input type="text" id="edit-source-' + claim.id + '" value="' + escapeHtml(claim.source || '') + '" placeholder="Source" class="edit-source-input">';
+                    html += '<div class="edit-actions">';
+                    html += '<button onclick="saveEdit(\'' + claim.id + '\')" class="save-btn">Save</button>';
+                    html += '<button onclick="cancelEdit(\'' + claim.id + '\')" class="cancel-btn">Cancel</button>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                }
+                container.innerHTML = html;
             }
 
             function viewClaim(id) {
-                window.location.href = `claimDetail.html?id=${id}`;
+                window.location.href = 'claimDetail.html?id=' + id;
             }
 
             window.editClaim = function(id) {
                 event.stopPropagation();
-                document.getElementById(`edit-form-${id}`).style.display = 'block';
-                document.getElementById(`edit-input-${id}`).focus();
+                document.getElementById('edit-form-' + id).style.display = 'block';
+                document.getElementById('edit-input-' + id).focus();
             }
 
             window.cancelEdit = function(id) {
                 event.stopPropagation();
-                document.getElementById(`edit-form-${id}`).style.display = 'none';
+                document.getElementById('edit-form-' + id).style.display = 'none';
             }
 
             window.saveEdit = function(id) {
                 event.stopPropagation();
-                const input = document.getElementById(`edit-input-${id}`);
-                const sourceInput = document.getElementById(`edit-source-${id}`);
-                const newText = input.value.trim();
-                const newSource = sourceInput.value.trim();
+                var input = document.getElementById('edit-input-' + id);
+                var sourceInput = document.getElementById('edit-source-' + id);
+                var newText = input.value.trim();
+                var newSource = sourceInput.value.trim();
                 
                 if (!newText) {
                     alert('Claim cannot be empty');
@@ -162,7 +160,7 @@
                         source: newSource
                     });
                     
-                    document.getElementById(`edit-form-${id}`).style.display = 'none';
+                    document.getElementById('edit-form-' + id).style.display = 'none';
                     loadClaims();
                 } catch (error) {
                     console.error('Error updating claim:', error);
@@ -187,7 +185,7 @@
 
             function escapeHtml(text) {
                 if (!text) return '';
-                const div = document.createElement('div');
+                var div = document.createElement('div');
                 div.textContent = text;
                 return div.innerHTML;
             }
