@@ -62,8 +62,7 @@
                     allSources.push({
                         id: 'initial_' + claim.id,
                         link: claim.source,
-                        count: claim.count || '0',
-                        count2: claim.count2 || '0',
+                        reliabilityScore: claim.reliabilityScore || '0',
                         comments: claim.comments || [],
                         isInitial: true
                     });
@@ -114,19 +113,11 @@
                         sourcesHtml += '<a href="' + linkDisplay + '" class="source-link" target="_blank">' + linkDisplay + '</a>';
                         sourcesHtml += '</div>';
                         sourcesHtml += '<div class="source-row count-row">';
-                        sourcesHtml += '<span class="source-field-label">Count</span>';
+                        sourcesHtml += '<span class="source-field-label">Reliability Score</span>';
                         sourcesHtml += '<div class="count-control">';
-                        sourcesHtml += '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count\', -1, ' + source.isInitial + ')" class="count-btn">-</button>';
-                        sourcesHtml += '<span class="source-count" id="count-' + sourceId + '">' + (source.count || '0') + '</span>';
-                        sourcesHtml += '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count\', 1, ' + source.isInitial + ')" class="count-btn">+</button>';
-                        sourcesHtml += '</div>';
-                        sourcesHtml += '</div>';
-                        sourcesHtml += '<div class="source-row count-row">';
-                        sourcesHtml += '<span class="source-field-label">Count</span>';
-                        sourcesHtml += '<div class="count-control">';
-                        sourcesHtml += '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count2\', -1, ' + source.isInitial + ')" class="count-btn">-</button>';
-                        sourcesHtml += '<span class="source-count" id="count2-' + sourceId + '">' + (source.count2 || '0') + '</span>';
-                        sourcesHtml += '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count2\', 1, ' + source.isInitial + ')" class="count-btn">+</button>';
+                        sourcesHtml += '<button onclick="updateReliabilityScore(\'' + claim.id + '\', \'' + sourceId + '\', -1, ' + source.isInitial + ')" class="count-btn">-</button>';
+                        sourcesHtml += '<span class="source-count" id="score-' + sourceId + '">' + (source.reliabilityScore || '0') + '</span>';
+                        sourcesHtml += '<button onclick="updateReliabilityScore(\'' + claim.id + '\', \'' + sourceId + '\', 1, ' + source.isInitial + ')" class="count-btn">+</button>';
                         sourcesHtml += '</div>';
                         sourcesHtml += '</div>';
                         sourcesHtml += '<div class="comment-section">';
@@ -166,7 +157,7 @@
                 '</div>';
             }
 
-            function updateCount(claimId, sourceId, field, change, isInitial) {
+            function updateReliabilityScore(claimId, sourceId, change, isInitial) {
                 try {
                     var newValue = 0;
                     
@@ -174,15 +165,13 @@
                         var claim = getClaimById(claimId);
                         if (!claim) return;
                         
-                        var currentValue = parseInt(claim[field]) || 0;
+                        var currentValue = parseInt(claim.reliabilityScore) || 0;
                         newValue = currentValue + change;
                         
                         if (newValue < 0) newValue = 0;
                         if (newValue > 1) newValue = 1;
                         
-                        var updates = {};
-                        updates[field] = newValue.toString();
-                        updateClaim(claimId, updates);
+                        updateClaim(claimId, { reliabilityScore: newValue.toString() });
                     } else {
                         var sources = getSourcesForClaim(claimId);
                         var source = null;
@@ -194,23 +183,23 @@
                         }
                         if (!source) return;
                         
-                        var currentValue = parseInt(source[field]) || 0;
+                        var currentValue = parseInt(source.reliabilityScore) || 0;
                         newValue = currentValue + change;
                         
                         if (newValue < 0) newValue = 0;
                         if (newValue > 1) newValue = 1;
                         
-                        source[field] = newValue.toString();
-                        updateSource(sourceId, { [field]: newValue.toString() });
+                        source.reliabilityScore = newValue.toString();
+                        updateSource(sourceId, { reliabilityScore: newValue.toString() });
                     }
                     
-                    var countElement = document.getElementById(field + '-' + sourceId);
+                    var countElement = document.getElementById('score-' + sourceId);
                     if (countElement) {
                         countElement.textContent = newValue;
                     }
                 } catch (error) {
-                    console.error('Error updating count:', error);
-                    alert('Error updating count.');
+                    console.error('Error updating reliability score:', error);
+                    alert('Error updating reliability score.');
                 }
             }
 

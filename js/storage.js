@@ -52,8 +52,7 @@ function saveClaimToStorage(claimData) {
         claim: claimData.claim || claimData.text,
         text: claimData.text || claimData.claim,
         source: claimData.source || '',
-        count: '0',
-        count2: '0',
+        reliabilityScore: '0',
         comments: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -77,15 +76,10 @@ function updateClaim(id, updates) {
     var claims = getClaims();
     for (var i = 0; i < claims.length; i++) {
         if (claims[i].id === id) {
-            if (updates.count !== undefined) {
-                var count = parseInt(updates.count);
-                if (count < 0) updates.count = '0';
-                if (count > 1) updates.count = '1';
-            }
-            if (updates.count2 !== undefined) {
-                var count2 = parseInt(updates.count2);
-                if (count2 < 0) updates.count2 = '0';
-                if (count2 > 1) updates.count2 = '1';
+            if (updates.reliabilityScore !== undefined) {
+                var score = parseInt(updates.reliabilityScore);
+                if (score < 0) updates.reliabilityScore = '0';
+                if (score > 1) updates.reliabilityScore = '1';
             }
             claims[i] = { ...claims[i], ...updates, updatedAt: new Date().toISOString() };
             saveClaims(claims);
@@ -141,8 +135,7 @@ function saveSourceToStorage(claimId, sourceData) {
         id: Date.now().toString() + '_source',
         claimId: claimId,
         link: sourceData.link || sourceData,
-        count: '0',
-        count2: '0',
+        reliabilityScore: '0',
         comments: [],
         createdAt: new Date().toISOString()
     };
@@ -155,15 +148,10 @@ function updateSource(id, updates) {
     var sources = getSources();
     for (var i = 0; i < sources.length; i++) {
         if (sources[i].id === id) {
-            if (updates.count !== undefined) {
-                var count = parseInt(updates.count);
-                if (count < 0) updates.count = '0';
-                if (count > 1) updates.count = '1';
-            }
-            if (updates.count2 !== undefined) {
-                var count2 = parseInt(updates.count2);
-                if (count2 < 0) updates.count2 = '0';
-                if (count2 > 1) updates.count2 = '1';
+            if (updates.reliabilityScore !== undefined) {
+                var score = parseInt(updates.reliabilityScore);
+                if (score < 0) updates.reliabilityScore = '0';
+                if (score > 1) updates.reliabilityScore = '1';
             }
             sources[i] = { ...sources[i], ...updates };
             saveSources(sources);
