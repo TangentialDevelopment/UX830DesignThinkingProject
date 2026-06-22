@@ -19,7 +19,7 @@ function initStorage() {
 }
 
 function getClaims() {
-    const data = localStorage.getItem(STORAGE_KEYS.CLAIMS);
+    var data = localStorage.getItem(STORAGE_KEYS.CLAIMS);
     return data ? JSON.parse(data) : [];
 }
 
@@ -28,7 +28,7 @@ function saveClaims(claims) {
 }
 
 function getSources() {
-    const data = localStorage.getItem(STORAGE_KEYS.SOURCES);
+    var data = localStorage.getItem(STORAGE_KEYS.SOURCES);
     return data ? JSON.parse(data) : [];
 }
 
@@ -37,7 +37,7 @@ function saveSources(sources) {
 }
 
 function getComments() {
-    const data = localStorage.getItem(STORAGE_KEYS.COMMENTS);
+    var data = localStorage.getItem(STORAGE_KEYS.COMMENTS);
     return data ? JSON.parse(data) : [];
 }
 
@@ -46,8 +46,8 @@ function saveComments(comments) {
 }
 
 function saveClaimToStorage(claimData) {
-    const claims = getClaims();
-    const newClaim = {
+    var claims = getClaims();
+    var newClaim = {
         id: Date.now().toString(),
         ...claimData,
         createdAt: new Date().toISOString(),
@@ -59,13 +59,13 @@ function saveClaimToStorage(claimData) {
 }
 
 function getClaimById(id) {
-    const claims = getClaims();
-    return claims.find(claim => claim.id === id);
+    var claims = getClaims();
+    return claims.find(function(claim) { return claim.id === id; });
 }
 
 function updateClaim(id, updates) {
-    const claims = getClaims();
-    const index = claims.findIndex(claim => claim.id === id);
+    var claims = getClaims();
+    var index = claims.findIndex(function(claim) { return claim.id === id; });
     if (index !== -1) {
         claims[index] = { ...claims[index], ...updates, updatedAt: new Date().toISOString() };
         saveClaims(claims);
@@ -75,30 +75,30 @@ function updateClaim(id, updates) {
 }
 
 function deleteClaim(id) {
-    const claims = getClaims();
-    const filtered = claims.filter(claim => claim.id !== id);
+    var claims = getClaims();
+    var filtered = claims.filter(function(claim) { return claim.id !== id; });
     saveClaims(filtered);
     
-    const sources = getSources();
-    const filteredSources = sources.filter(source => source.claimId !== id);
+    var sources = getSources();
+    var filteredSources = sources.filter(function(source) { return source.claimId !== id; });
     saveSources(filteredSources);
     
-    const comments = getComments();
-    const filteredComments = comments.filter(comment => comment.claimId !== id);
+    var comments = getComments();
+    var filteredComments = comments.filter(function(comment) { return comment.claimId !== id; });
     saveComments(filteredComments);
 }
 
 function getSourcesForClaim(claimId) {
-    const sources = getSources();
-    return sources.filter(source => source.claimId === claimId);
+    var sources = getSources();
+    return sources.filter(function(source) { return source.claimId === claimId; });
 }
 
-function addSource(claimId, sourceData) {
-    const sources = getSources();
-    const newSource = {
+function saveSourceToStorage(claimId, sourceData) {
+    var sources = getSources();
+    var newSource = {
         id: Date.now().toString() + '_source',
         claimId: claimId,
-        ...sourceData,
+        link: sourceData.link || sourceData,
         count: '0',
         count2: '0',
         createdAt: new Date().toISOString()
@@ -109,8 +109,8 @@ function addSource(claimId, sourceData) {
 }
 
 function updateSource(id, updates) {
-    const sources = getSources();
-    const index = sources.findIndex(source => source.id === id);
+    var sources = getSources();
+    var index = sources.findIndex(function(source) { return source.id === id; });
     if (index !== -1) {
         sources[index] = { ...sources[index], ...updates };
         saveSources(sources);
@@ -120,13 +120,13 @@ function updateSource(id, updates) {
 }
 
 function getCommentsForSource(sourceId) {
-    const comments = getComments();
-    return comments.filter(comment => comment.sourceId === sourceId);
+    var comments = getComments();
+    return comments.filter(function(comment) { return comment.sourceId === sourceId; });
 }
 
 function addComment(claimId, sourceId, text) {
-    const comments = getComments();
-    const newComment = {
+    var comments = getComments();
+    var newComment = {
         id: Date.now().toString() + '_comment',
         claimId: claimId,
         sourceId: sourceId,
@@ -139,19 +139,19 @@ function addComment(claimId, sourceId, text) {
 }
 
 function deleteComment(id) {
-    const comments = getComments();
-    const filtered = comments.filter(comment => comment.id !== id);
+    var comments = getComments();
+    var filtered = comments.filter(function(comment) { return comment.id !== id; });
     saveComments(filtered);
 }
 
 function searchClaims(query) {
-    const claims = getClaims();
+    var claims = getClaims();
     if (!query) return claims;
-    const q = query.toLowerCase();
-    return claims.filter(claim => {
-        const claimMatch = claim.claim?.toLowerCase().includes(q) || false;
-        const textMatch = claim.text?.toLowerCase().includes(q) || false;
-        const sourceMatch = claim.source?.toLowerCase().includes(q) || false;
+    var q = query.toLowerCase();
+    return claims.filter(function(claim) {
+        var claimMatch = claim.claim && claim.claim.toLowerCase().indexOf(q) !== -1;
+        var textMatch = claim.text && claim.text.toLowerCase().indexOf(q) !== -1;
+        var sourceMatch = claim.source && claim.source.toLowerCase().indexOf(q) !== -1;
         return claimMatch || textMatch || sourceMatch;
     });
 }
@@ -164,7 +164,7 @@ window.saveClaimToStorage = saveClaimToStorage;
 window.updateClaim = updateClaim;
 window.deleteClaim = deleteClaim;
 window.getSourcesForClaim = getSourcesForClaim;
-window.addSource = addSource;
+window.saveSourceToStorage = saveSourceToStorage;
 window.updateSource = updateSource;
 window.getCommentsForSource = getCommentsForSource;
 window.addComment = addComment;

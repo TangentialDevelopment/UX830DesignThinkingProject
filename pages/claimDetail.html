@@ -24,8 +24,8 @@
 
         <script src="../js/storage.js"></script>
         <script>
-            const urlParams = new URLSearchParams(window.location.search);
-            const claimId = urlParams.get('id');
+            var urlParams = new URLSearchParams(window.location.search);
+            var claimId = urlParams.get('id');
 
             document.addEventListener('DOMContentLoaded', function() {
                 if (claimId) {
@@ -37,7 +37,7 @@
 
             function loadClaim(id) {
                 try {
-                    const claim = getClaimById(id);
+                    var claim = getClaimById(id);
                     
                     if (!claim) {
                         document.getElementById('claimContent').innerHTML = '<p class="error">Claim not found.</p>';
@@ -52,110 +52,151 @@
             }
 
             function displayClaim(claim) {
-                const container = document.getElementById('claimContent');
+                var container = document.getElementById('claimContent');
                 
-                const sources = getSourcesForClaim(claim.id);
+                var sources = getSourcesForClaim(claim.id);
+                var allSources = [];
                 
-                let sourcesHtml = '';
+                if (claim.source) {
+                    allSources.push({
+                        id: 'initial_source_' + claim.id,
+                        link: claim.source,
+                        count: '0',
+                        count2: '0',
+                        isInitial: true
+                    });
+                }
+                
                 if (sources && sources.length > 0) {
-                    sourcesHtml = sources.map((source, index) => {
-                        const comments = getCommentsForSource(source.id);
-                        return `
-                            <div class="source-section" data-source-index="${index}">
-                                <div class="source-header">
-                                    <span class="source-label">Source ${index + 1}</span>
-                                </div>
-                                <div class="source-content">
-                                    <div class="source-row">
-                                        <span class="source-field-label">Link</span>
-                                        <a href="${source.link || '#'}" class="source-link" target="_blank">${source.link || 'No link'}</a>
-                                    </div>
-                                    <div class="source-row count-row">
-                                        <span class="source-field-label">Count</span>
-                                        <div class="count-control">
-                                            <button onclick="updateCount('${claim.id}', '${source.id}', 'count', -1)" class="count-btn">-</button>
-                                            <span class="source-count" id="count-${source.id}">${source.count || '0'}</span>
-                                            <button onclick="updateCount('${claim.id}', '${source.id}', 'count', 1)" class="count-btn">+</button>
-                                        </div>
-                                    </div>
-                                    <div class="source-row count-row">
-                                        <span class="source-field-label">Count</span>
-                                        <div class="count-control">
-                                            <button onclick="updateCount('${claim.id}', '${source.id}', 'count2', -1)" class="count-btn">-</button>
-                                            <span class="source-count" id="count2-${source.id}">${source.count2 || '0'}</span>
-                                            <button onclick="updateCount('${claim.id}', '${source.id}', 'count2', 1)" class="count-btn">+</button>
-                                        </div>
-                                    </div>
-                                    <div class="comment-section">
-                                        <div class="comment-header">
-                                            <span class="comment-label">Comment section by source</span>
-                                        </div>
-                                        <div class="comments">
-                                            ${comments && comments.length > 0 ? 
-                                                comments.map(comment => `
-                                                    <div class="comment-item">
-                                                        <span class="comment-text">${escapeHtml(comment.text)}</span>
-                                                        <button onclick="deleteComment('${comment.id}')" class="delete-comment-btn">x</button>
-                                                    </div>
-                                                `).join('') : 
-                                                '<p class="no-comments">No comments yet.</p>'
-                                            }
-                                        </div>
-                                        <div class="add-comment">
-                                            <input type="text" class="comment-input" placeholder="Add comment" id="comment-input-${source.id}">
-                                            <button onclick="addComment('${claim.id}', '${source.id}')" class="add-comment-btn">Add comment</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                    for (var i = 0; i < sources.length; i++) {
+                        sources[i].isInitial = false;
+                        allSources.push(sources[i]);
+                    }
+                }
+                
+                var sourcesHtml = '';
+                if (allSources && allSources.length > 0) {
+                    sourcesHtml = allSources.map(function(source, index) {
+                        var comments = [];
+                        if (!source.isInitial) {
+                            comments = getCommentsForSource(source.id);
+                        }
+                        var sourceLabel = source.isInitial ? 'Initial Source' : 'Source ' + (allSources.filter(function(s) { return !s.isInitial; }).indexOf(source) + 1);
+                        var sourceId = source.id || 'initial_' + index;
+                        
+                        var commentsHtml = '';
+                        if (source.isInitial) {
+                            commentsHtml = '<p class="no-comments">Comments not available for initial source.</p>';
+                        } else {
+                            commentsHtml = '';
+                            if (comments && comments.length > 0) {
+                                for (var c = 0; c < comments.length; c++) {
+                                    commentsHtml += '<div class="comment-item">';
+                                    commentsHtml += '<span class="comment-text">' + escapeHtml(comments[c].text) + '</span>';
+                                    commentsHtml += '<button onclick="deleteComment(\'' + comments[c].id + '\')" class="delete-comment-btn">x</button>';
+                                    commentsHtml += '</div>';
+                                }
+                            } else {
+                                commentsHtml = '<p class="no-comments">No comments yet.</p>';
+                            }
+                        }
+                        
+                        return '<div class="source-section" data-source-index="' + index + '">' +
+                            '<div class="source-header">' +
+                                '<span class="source-label">' + sourceLabel + '</span>' +
+                            '</div>' +
+                            '<div class="source-content">' +
+                                '<div class="source-row">' +
+                                    '<span class="source-field-label">Link</span>' +
+                                    '<a href="' + (source.link || '#') + '" class="source-link" target="_blank">' + (source.link || 'No link') + '</a>' +
+                                '</div>' +
+                                '<div class="source-row count-row">' +
+                                    '<span class="source-field-label">Count</span>' +
+                                    '<div class="count-control">' +
+                                        '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count\', -1, ' + source.isInitial + ')" class="count-btn">-</button>' +
+                                        '<span class="source-count" id="count-' + sourceId + '">' + (source.count || '0') + '</span>' +
+                                        '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count\', 1, ' + source.isInitial + ')" class="count-btn">+</button>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="source-row count-row">' +
+                                    '<span class="source-field-label">Count</span>' +
+                                    '<div class="count-control">' +
+                                        '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count2\', -1, ' + source.isInitial + ')" class="count-btn">-</button>' +
+                                        '<span class="source-count" id="count2-' + sourceId + '">' + (source.count2 || '0') + '</span>' +
+                                        '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count2\', 1, ' + source.isInitial + ')" class="count-btn">+</button>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="comment-section">' +
+                                    '<div class="comment-header">' +
+                                        '<span class="comment-label">Comment section by source</span>' +
+                                    '</div>' +
+                                    '<div class="comments">' +
+                                        commentsHtml +
+                                    '</div>' +
+                                    (source.isInitial ? '' : '<div class="add-comment">' +
+                                        '<input type="text" class="comment-input" placeholder="Add comment" id="comment-input-' + sourceId + '">' +
+                                        '<button onclick="addComment(\'' + claim.id + '\', \'' + sourceId + '\')" class="add-comment-btn">Add comment</button>' +
+                                    '</div>') +
+                                '</div>' +
+                            '</div>' +
+                        '</div>';
                     }).join('');
                 }
 
-                container.innerHTML = `
-                    <div class="claim-detail">
-                        <div class="claim-header">
-                            <h1 class="claim-title">${escapeHtml(claim.claim || claim.text || 'No claim text')}</h1>
-                        </div>
-                        
-                        <div class="claim-meta">
-                            <span class="meta-item">Created: ${new Date(claim.createdAt).toLocaleString()}</span>
-                            ${claim.updatedAt && claim.updatedAt !== claim.createdAt ? 
-                                `<span class="meta-item">Updated: ${new Date(claim.updatedAt).toLocaleString()}</span>` : ''
-                            }
-                        </div>
-
-                        <div class="sources-container">
-                            <h2 class="sources-title">Sources</h2>
-                            ${sourcesHtml || '<p class="no-sources-text">No sources added yet.</p>'}
-                        </div>
-
-                        <div class="add-source-section-bottom">
-                            <a href="addSource.html?id=${claim.id}" class="add-source-btn-bottom">Add Source</a>
-                        </div>
-                    </div>
-                `;
+                container.innerHTML = '<div class="claim-detail">' +
+                    '<div class="claim-header">' +
+                        '<h1 class="claim-title">' + escapeHtml(claim.claim || claim.text || 'No claim text') + '</h1>' +
+                    '</div>' +
+                    '<div class="claim-meta">' +
+                        '<span class="meta-item">Created: ' + new Date(claim.createdAt).toLocaleString() + '</span>' +
+                        (claim.updatedAt && claim.updatedAt !== claim.createdAt ? 
+                            '<span class="meta-item">Updated: ' + new Date(claim.updatedAt).toLocaleString() + '</span>' : ''
+                        ) +
+                    '</div>' +
+                    '<div class="sources-container">' +
+                        '<h2 class="sources-title">Sources</h2>' +
+                        (sourcesHtml || '<p class="no-sources-text">No sources added yet.</p>') +
+                    '</div>' +
+                    '<div class="add-source-section-bottom">' +
+                        '<a href="addSource.html?id=' + claim.id + '" class="add-source-btn-bottom">Add Source</a>' +
+                    '</div>' +
+                '</div>';
             }
 
-            function updateCount(claimId, sourceId, field, change) {
+            function updateCount(claimId, sourceId, field, change, isInitial) {
                 try {
-                    const sources = getSourcesForClaim(claimId);
-                    const source = sources.find(s => s.id === sourceId);
-                    if (!source) return;
-                    
-                    let currentValue = parseInt(source[field]) || 0;
-                    let newValue = currentValue + change;
-                    
-                    if (newValue < 0) {
-                        newValue = 0;
-                    }
-                    
-                    source[field] = newValue.toString();
-                    updateSource(sourceId, { [field]: newValue.toString() });
-                    
-                    const countElement = document.getElementById(`${field}-${sourceId}`);
-                    if (countElement) {
-                        countElement.textContent = newValue;
+                    if (isInitial) {
+                        var claim = getClaimById(claimId);
+                        if (!claim) return;
+                        
+                        var currentValue = parseInt(claim[field]) || 0;
+                        var newValue = currentValue + change;
+                        if (newValue < 0) newValue = 0;
+                        
+                        var updates = {};
+                        updates[field] = newValue.toString();
+                        updateClaim(claimId, updates);
+                        
+                        var countElement = document.getElementById(field + '-' + sourceId);
+                        if (countElement) {
+                            countElement.textContent = newValue;
+                        }
+                    } else {
+                        var sources = getSourcesForClaim(claimId);
+                        var source = sources.find(function(s) { return s.id === sourceId; });
+                        if (!source) return;
+                        
+                        var currentValue = parseInt(source[field]) || 0;
+                        var newValue = currentValue + change;
+                        if (newValue < 0) newValue = 0;
+                        
+                        source[field] = newValue.toString();
+                        updateSource(sourceId, { [field]: newValue.toString() });
+                        
+                        var countElement = document.getElementById(field + '-' + sourceId);
+                        if (countElement) {
+                            countElement.textContent = newValue;
+                        }
                     }
                 } catch (error) {
                     console.error('Error updating count:', error);
@@ -164,8 +205,8 @@
             }
 
             function addComment(claimId, sourceId) {
-                const input = document.getElementById(`comment-input-${sourceId}`);
-                const text = input.value.trim();
+                var input = document.getElementById('comment-input-' + sourceId);
+                var text = input.value.trim();
                 
                 if (!text) {
                     alert('Please enter a comment.');
@@ -198,7 +239,7 @@
 
             function escapeHtml(text) {
                 if (!text) return '';
-                const div = document.createElement('div');
+                var div = document.createElement('div');
                 div.textContent = text;
                 return div.innerHTML;
             }

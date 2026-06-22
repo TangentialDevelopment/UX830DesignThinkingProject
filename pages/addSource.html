@@ -26,7 +26,7 @@
                 </div>
 
                 <div class="submit-section">
-                    <button onclick="addSource()" class="submit-btn">
+                    <button id="submitBtn" class="submit-btn">
                         Add Source
                     </button>
                 </div>
@@ -37,24 +37,26 @@
 
         <script src="../js/storage.js"></script>
         <script>
-            const urlParams = new URLSearchParams(window.location.search);
-            const claimId = urlParams.get('id');
+            var urlParams = new URLSearchParams(window.location.search);
+            var claimId = urlParams.get('id');
+            var linkInput = document.getElementById('sourceLink');
+            var message = document.getElementById('message');
+            var submitBtn = document.getElementById('submitBtn');
 
             document.addEventListener('DOMContentLoaded', function() {
                 if (!claimId) {
-                    document.getElementById('message').innerHTML = '<span class="error">No claim ID provided.</span>';
+                    message.innerHTML = '<span class="error">No claim ID provided.</span>';
                 }
-                document.getElementById('sourceLink').focus();
+                linkInput.focus();
             });
 
-            function addSource() {
-                const linkInput = document.getElementById('sourceLink');
-                const message = document.getElementById('message');
-                const link = linkInput.value.trim();
+            function addSourceToClaim() {
+                var link = linkInput.value.trim();
+                
+                message.innerHTML = '';
                 
                 if (!link) {
                     message.innerHTML = '<span class="error">Please enter a source link.</span>';
-                    setTimeout(() => { message.innerHTML = ''; }, 3000);
                     return;
                 }
 
@@ -64,32 +66,38 @@
                 }
 
                 try {
-                    const claim = getClaimById(claimId);
+                    var claim = getClaimById(claimId);
                     
                     if (!claim) {
                         message.innerHTML = '<span class="error">Claim not found.</span>';
                         return;
                     }
                     
-                    addSource(claimId, {
-                        link: link
-                    });
+                    saveSourceToStorage(claimId, link);
                     
                     message.innerHTML = '<span class="success">Source added successfully!</span>';
                     linkInput.value = '';
                     
-                    setTimeout(() => {
-                        window.location.href = `claimDetail.html?id=${claimId}`;
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Adding...';
+                    
+                    setTimeout(function() {
+                        window.location.href = 'claimDetail.html?id=' + claimId;
                     }, 1500);
                 } catch (error) {
                     console.error('Error adding source:', error);
                     message.innerHTML = '<span class="error">Error adding source. Please try again.</span>';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Add Source';
                 }
             }
 
-            document.getElementById('sourceLink').addEventListener('keypress', function(e) {
+            submitBtn.addEventListener('click', addSourceToClaim);
+
+            linkInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
-                    addSource();
+                    e.preventDefault();
+                    addSourceToClaim();
                 }
             });
         </script>
