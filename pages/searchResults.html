@@ -7,9 +7,6 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="../css/searchResults.css">
-        
-        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     </head>
     <body>
         <div class="container">
@@ -33,21 +30,19 @@
             </div>
         </div>
 
-        <script src="../js/firebase-config.js"></script>
+        <script src="../js/storage.js"></script>
         <script>
             const urlParams = new URLSearchParams(window.location.search);
             const initialQuery = urlParams.get('q') || '';
             
             let currentQuery = initialQuery;
-            let allClaims = [];
-            let unsubscribe = null;
 
             if (initialQuery) {
                 document.getElementById('searchInput').value = initialQuery;
             }
 
             document.addEventListener('DOMContentLoaded', function() {
-                setupRealtimeListener();
+                loadClaims();
             });
 
             document.getElementById('searchForm').addEventListener('submit', function(e) {
@@ -62,46 +57,21 @@
                 }
             });
 
-            function setupRealtimeListener() {
+            function loadClaims() {
                 const loadingIndicator = document.getElementById('loadingIndicator');
                 loadingIndicator.style.display = 'block';
                 
-                if (unsubscribe) {
-                    unsubscribe();
-                }
-                
-                unsubscribe = db.collection('claims')
-                    .orderBy('createdAt', 'desc')
-                    .onSnapshot((snapshot) => {
-                        loadingIndicator.style.display = 'none';
-                        
-                        allClaims = snapshot.docs.map(doc => ({
-                            id: doc.id,
-                            ...doc.data()
-                        }));
-                        
-                        if (currentQuery) {
-                            const filtered = filterClaims(allClaims, currentQuery);
-                            displayClaims(filtered);
-                        } else {
-                            displayClaims(allClaims);
-                        }
-                    }, (error) => {
-                        loadingIndicator.style.display = 'none';
-                        console.error('Error listening to claims:', error);
-                        document.getElementById('claimsList').innerHTML = 
-                            '<p class="error">Error loading claims. Please refresh the page.</p>';
-                    });
-            }
-
-            function filterClaims(claims, query) {
-                const q = query.toLowerCase();
-                return claims.filter(claim => {
-                    const claimMatch = claim.claim?.toLowerCase().includes(q) || false;
-                    const textMatch = claim.text?.toLowerCase().includes(q) || false;
-                    const sourceMatch = claim.source?.toLowerCase().includes(q) || false;
-                    return claimMatch || textMatch || sourceMatch;
-                });
+                setTimeout(() => {
+                    const claims = getClaims();
+                    loadingIndicator.style.display = 'none';
+                    
+                    if (currentQuery) {
+                        const filtered = searchClaims(currentQuery);
+                        displayClaims(filtered);
+                    } else {
+                        displayClaims(claims);
+                    }
+                }, 300);
             }
 
             function performSearch() {
@@ -113,12 +83,7 @@
                     window.location.pathname;
                 window.history.pushState({ path: newUrl }, '', newUrl);
                 
-                if (query) {
-                    const filtered = filterClaims(allClaims, query);
-                    displayClaims(filtered);
-                } else {
-                    displayClaims(allClaims);
-                }
+                loadClaims();
             }
 
             function displayClaims(claims) {
@@ -177,7 +142,7 @@
                 document.getElementById(`edit-form-${id}`).style.display = 'none';
             }
 
-            window.saveEdit = async function(id) {
+            window.saveEdit = function(id) {
                 event.stopPropagation();
                 const input = document.getElementById(`edit-input-${id}`);
                 const sourceInput = document.getElementById(`edit-source-${id}`);
@@ -190,33 +155,29 @@
                 }
 
                 try {
-                    const updateData = {
+                    updateClaim(id, {
                         claim: newText,
-                        text: `${newText}\n\nSource: ${newSource}`,
-                        updatedAt: new Date().toISOString()
-                    };
-                    
-                    if (newSource) {
-                        updateData.source = newSource;
-                    }
-                    
-                    await db.collection('claims').doc(id).update(updateData);
+                        text: newText,
+                        source: newSource
+                    });
                     
                     document.getElementById(`edit-form-${id}`).style.display = 'none';
+                    loadClaims();
                 } catch (error) {
                     console.error('Error updating claim:', error);
                     alert('Error updating claim. Please try again.');
                 }
             }
 
-            window.deleteClaim = async function(id) {
+            window.deleteClaim = function(id) {
                 event.stopPropagation();
                 if (!confirm('Are you sure you want to delete this claim?')) {
                     return;
                 }
 
                 try {
-                    await db.collection('claims').doc(id).delete();
+                    deleteClaim(id);
+                    loadClaims();
                 } catch (error) {
                     console.error('Error deleting claim:', error);
                     alert('Error deleting claim. Please try again.');
@@ -229,12 +190,6 @@
                 div.textContent = text;
                 return div.innerHTML;
             }
-
-            window.addEventListener('beforeunload', function() {
-                if (unsubscribe) {
-                    unsubscribe();
-                }
-            });
         </script>
     </body>
 </html>

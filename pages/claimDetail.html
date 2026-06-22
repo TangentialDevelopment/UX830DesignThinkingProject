@@ -7,9 +7,6 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="../css/claimDetail.css">
-        
-        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     </head>
     <body>
         <div class="container">
@@ -24,7 +21,7 @@
             </div>
         </div>
 
-        <script src="../js/firebase-config.js"></script>
+        <script src="../js/storage.js"></script>
         <script>
             const urlParams = new URLSearchParams(window.location.search);
             const claimId = urlParams.get('id');
@@ -37,16 +34,15 @@
                 }
             });
 
-            async function loadClaim(id) {
+            function loadClaim(id) {
                 try {
-                    const doc = await db.collection('claims').doc(id).get();
+                    const claim = getClaimById(id);
                     
-                    if (!doc.exists) {
+                    if (!claim) {
                         document.getElementById('claimContent').innerHTML = '<p class="error">Claim not found.</p>';
                         return;
                     }
 
-                    const claim = { id: doc.id, ...doc.data() };
                     displayClaim(claim);
                 } catch (error) {
                     console.error('Error loading claim:', error);
@@ -57,57 +53,62 @@
             function displayClaim(claim) {
                 const container = document.getElementById('claimContent');
                 
+                const sources = getSourcesForClaim(claim.id);
+                
                 let sourcesHtml = '';
-                if (claim.sources && claim.sources.length > 0) {
-                    sourcesHtml = claim.sources.map((source, index) => `
-                        <div class="source-section" data-source-index="${index}">
-                            <div class="source-header">
-                                <span class="source-label">Source ${index + 1}</span>
+                if (sources && sources.length > 0) {
+                    sourcesHtml = sources.map((source, index) => {
+                        const comments = getCommentsForSource(source.id);
+                        return `
+                            <div class="source-section" data-source-index="${index}">
+                                <div class="source-header">
+                                    <span class="source-label">Source ${index + 1}</span>
+                                </div>
+                                <div class="source-content">
+                                    <div class="source-row">
+                                        <span class="source-field-label">Link</span>
+                                        <a href="${source.link || '#'}" class="source-link" target="_blank">${source.link || 'No link'}</a>
+                                    </div>
+                                    <div class="source-row count-row">
+                                        <span class="source-field-label">Count</span>
+                                        <div class="count-control">
+                                            <button onclick="updateCount('${claim.id}', '${source.id}', 'count', -1)" class="count-btn">-</button>
+                                            <span class="source-count" id="count-${source.id}">${source.count || '0'}</span>
+                                            <button onclick="updateCount('${claim.id}', '${source.id}', 'count', 1)" class="count-btn">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="source-row count-row">
+                                        <span class="source-field-label">Count</span>
+                                        <div class="count-control">
+                                            <button onclick="updateCount('${claim.id}', '${source.id}', 'count2', -1)" class="count-btn">-</button>
+                                            <span class="source-count" id="count2-${source.id}">${source.count2 || '0'}</span>
+                                            <button onclick="updateCount('${claim.id}', '${source.id}', 'count2', 1)" class="count-btn">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="comment-section">
+                                        <div class="comment-header">
+                                            <span class="comment-label">Comment section by source</span>
+                                        </div>
+                                        <div class="comments">
+                                            ${comments && comments.length > 0 ? 
+                                                comments.map(comment => `
+                                                    <div class="comment-item">
+                                                        <span class="comment-text">${escapeHtml(comment.text)}</span>
+                                                        <button onclick="deleteComment('${comment.id}')" class="delete-comment-btn">×</button>
+                                                    </div>
+                                                `).join('') : 
+                                                '<p class="no-comments">No comments yet.</p>'
+                                            }
+                                        </div>
+                                        <div class="add-comment">
+                                            <input type="text" class="comment-input" placeholder="Add comment" id="comment-input-${source.id}">
+                                            <button onclick="addComment('${claim.id}', '${source.id}')" class="add-comment-btn">Add comment</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="source-content">
-                                <div class="source-row">
-                                    <span class="source-field-label">Link</span>
-                                    <a href="${source.link || '#'}" class="source-link" target="_blank">${source.link || 'No link'}</a>
-                                </div>
-                                <div class="source-row count-row">
-                                    <span class="source-field-label">Count</span>
-                                    <div class="count-control">
-                                        <button onclick="updateCount('${claim.id}', ${index}, 'count', -1)" class="count-btn">-</button>
-                                        <span class="source-count" id="count-${index}">${source.count || '0'}</span>
-                                        <button onclick="updateCount('${claim.id}', ${index}, 'count', 1)" class="count-btn">+</button>
-                                    </div>
-                                </div>
-                                <div class="source-row count-row">
-                                    <span class="source-field-label">Count</span>
-                                    <div class="count-control">
-                                        <button onclick="updateCount('${claim.id}', ${index}, 'count2', -1)" class="count-btn">-</button>
-                                        <span class="source-count" id="count2-${index}">${source.count2 || '0'}</span>
-                                        <button onclick="updateCount('${claim.id}', ${index}, 'count2', 1)" class="count-btn">+</button>
-                                    </div>
-                                </div>
-                                <div class="comment-section">
-                                    <div class="comment-header">
-                                        <span class="comment-label">Comment section by source</span>
-                                    </div>
-                                    <div class="comments">
-                                        ${source.comments && source.comments.length > 0 ? 
-                                            source.comments.map(comment => `
-                                                <div class="comment-item">
-                                                    <span class="comment-text">${escapeHtml(comment)}</span>
-                                                    <button onclick="deleteComment('${claim.id}', ${index}, '${escapeHtml(comment)}')" class="delete-comment-btn">×</button>
-                                                </div>
-                                            `).join('') : 
-                                            '<p class="no-comments">No comments yet.</p>'
-                                        }
-                                    </div>
-                                    <div class="add-comment">
-                                        <input type="text" class="comment-input" placeholder="Add comment" id="comment-input-${index}">
-                                        <button onclick="addComment('${claim.id}', ${index})" class="add-comment-btn">Add comment</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 }
 
                 container.innerHTML = `
@@ -135,29 +136,22 @@
                 `;
             }
 
-            async function updateCount(claimId, sourceIndex, field, change) {
+            function updateCount(claimId, sourceId, field, change) {
                 try {
-                    const doc = await db.collection('claims').doc(claimId).get();
-                    const claim = doc.data();
+                    const source = getSourcesForClaim(claimId).find(s => s.id === sourceId);
+                    if (!source) return;
                     
-                    if (!claim.sources || !claim.sources[sourceIndex]) {
-                        return;
-                    }
-                    
-                    let currentValue = parseInt(claim.sources[sourceIndex][field]) || 0;
+                    let currentValue = parseInt(source[field]) || 0;
                     let newValue = currentValue + change;
                     
                     if (newValue < 0) {
                         newValue = 0;
                     }
                     
-                    claim.sources[sourceIndex][field] = newValue.toString();
+                    source[field] = newValue.toString();
+                    updateSource(sourceId, { [field]: newValue.toString() });
                     
-                    await db.collection('claims').doc(claimId).update({
-                        sources: claim.sources
-                    });
-                    
-                    const countElement = document.getElementById(`${field}-${sourceIndex}`);
+                    const countElement = document.getElementById(`${field}-${sourceId}`);
                     if (countElement) {
                         countElement.textContent = newValue;
                     }
@@ -167,37 +161,17 @@
                 }
             }
 
-            async function addComment(claimId, sourceIndex) {
-                const input = document.getElementById(`comment-input-${sourceIndex}`);
-                const comment = input.value.trim();
+            function addComment(claimId, sourceId) {
+                const input = document.getElementById(`comment-input-${sourceId}`);
+                const text = input.value.trim();
                 
-                if (!comment) {
+                if (!text) {
                     alert('Please enter a comment.');
                     return;
                 }
 
                 try {
-                    const doc = await db.collection('claims').doc(claimId).get();
-                    const claim = doc.data();
-                    
-                    if (!claim.sources) {
-                        claim.sources = [];
-                    }
-                    
-                    if (!claim.sources[sourceIndex]) {
-                        claim.sources[sourceIndex] = {};
-                    }
-                    
-                    if (!claim.sources[sourceIndex].comments) {
-                        claim.sources[sourceIndex].comments = [];
-                    }
-                    
-                    claim.sources[sourceIndex].comments.push(comment);
-                    
-                    await db.collection('claims').doc(claimId).update({
-                        sources: claim.sources
-                    });
-                    
+                    addComment(claimId, sourceId, text);
                     input.value = '';
                     loadClaim(claimId);
                 } catch (error) {
@@ -206,27 +180,14 @@
                 }
             }
 
-            async function deleteComment(claimId, sourceIndex, commentText) {
+            function deleteComment(commentId) {
                 if (!confirm('Delete this comment?')) {
                     return;
                 }
 
                 try {
-                    const doc = await db.collection('claims').doc(claimId).get();
-                    const claim = doc.data();
-                    
-                    if (!claim.sources || !claim.sources[sourceIndex] || !claim.sources[sourceIndex].comments) {
-                        return;
-                    }
-                    
-                    const commentIndex = claim.sources[sourceIndex].comments.indexOf(commentText);
-                    if (commentIndex !== -1) {
-                        claim.sources[sourceIndex].comments.splice(commentIndex, 1);
-                        await db.collection('claims').doc(claimId).update({
-                            sources: claim.sources
-                        });
-                        loadClaim(claimId);
-                    }
+                    deleteComment(commentId);
+                    loadClaim(claimId);
                 } catch (error) {
                     console.error('Error deleting comment:', error);
                     alert('Error deleting comment.');
