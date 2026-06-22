@@ -55,92 +55,95 @@
                 var container = document.getElementById('claimContent');
                 
                 var sources = getSourcesForClaim(claim.id);
+                
                 var allSources = [];
                 
                 if (claim.source) {
                     allSources.push({
-                        id: 'initial_source_' + claim.id,
+                        id: 'initial_' + claim.id,
                         link: claim.source,
-                        count: '0',
-                        count2: '0',
+                        count: claim.count || '0',
+                        count2: claim.count2 || '0',
+                        comments: claim.comments || [],
                         isInitial: true
                     });
                 }
                 
-                if (sources && sources.length > 0) {
-                    for (var i = 0; i < sources.length; i++) {
-                        sources[i].isInitial = false;
-                        allSources.push(sources[i]);
-                    }
+                for (var i = 0; i < sources.length; i++) {
+                    sources[i].isInitial = false;
+                    allSources.push(sources[i]);
                 }
                 
                 var sourcesHtml = '';
                 if (allSources && allSources.length > 0) {
-                    sourcesHtml = allSources.map(function(source, index) {
+                    for (var s = 0; s < allSources.length; s++) {
+                        var source = allSources[s];
+                        var sourceLabel = source.isInitial ? 'Initial Source' : 'Source ' + s;
+                        var sourceId = source.id || 'initial_' + claim.id;
+                        
                         var comments = [];
-                        if (!source.isInitial) {
+                        if (source.isInitial) {
+                            comments = source.comments || [];
+                        } else {
                             comments = getCommentsForSource(source.id);
                         }
-                        var sourceLabel = source.isInitial ? 'Initial Source' : 'Source ' + (allSources.filter(function(s) { return !s.isInitial; }).indexOf(source) + 1);
-                        var sourceId = source.id || 'initial_' + index;
                         
                         var commentsHtml = '';
-                        if (source.isInitial) {
-                            commentsHtml = '<p class="no-comments">Comments not available for initial source.</p>';
-                        } else {
-                            commentsHtml = '';
-                            if (comments && comments.length > 0) {
-                                for (var c = 0; c < comments.length; c++) {
-                                    commentsHtml += '<div class="comment-item">';
-                                    commentsHtml += '<span class="comment-text">' + escapeHtml(comments[c].text) + '</span>';
-                                    commentsHtml += '<button onclick="deleteComment(\'' + comments[c].id + '\')" class="delete-comment-btn">x</button>';
-                                    commentsHtml += '</div>';
-                                }
-                            } else {
-                                commentsHtml = '<p class="no-comments">No comments yet.</p>';
+                        if (comments && comments.length > 0) {
+                            for (var c = 0; c < comments.length; c++) {
+                                var commentText = comments[c].text || comments[c];
+                                var commentId = comments[c].id || 'comment_' + c;
+                                commentsHtml += '<div class="comment-item">';
+                                commentsHtml += '<span class="comment-text">' + escapeHtml(commentText) + '</span>';
+                                commentsHtml += '<button onclick="deleteComment(\'' + commentId + '\', ' + source.isInitial + ')" class="delete-comment-btn">x</button>';
+                                commentsHtml += '</div>';
                             }
+                        } else {
+                            commentsHtml = '<p class="no-comments">No comments yet.</p>';
                         }
                         
-                        return '<div class="source-section" data-source-index="' + index + '">' +
-                            '<div class="source-header">' +
-                                '<span class="source-label">' + sourceLabel + '</span>' +
-                            '</div>' +
-                            '<div class="source-content">' +
-                                '<div class="source-row">' +
-                                    '<span class="source-field-label">Link</span>' +
-                                    '<a href="' + (source.link || '#') + '" class="source-link" target="_blank">' + (source.link || 'No link') + '</a>' +
-                                '</div>' +
-                                '<div class="source-row count-row">' +
-                                    '<span class="source-field-label">Count</span>' +
-                                    '<div class="count-control">' +
-                                        '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count\', -1, ' + source.isInitial + ')" class="count-btn">-</button>' +
-                                        '<span class="source-count" id="count-' + sourceId + '">' + (source.count || '0') + '</span>' +
-                                        '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count\', 1, ' + source.isInitial + ')" class="count-btn">+</button>' +
-                                    '</div>' +
-                                '</div>' +
-                                '<div class="source-row count-row">' +
-                                    '<span class="source-field-label">Count</span>' +
-                                    '<div class="count-control">' +
-                                        '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count2\', -1, ' + source.isInitial + ')" class="count-btn">-</button>' +
-                                        '<span class="source-count" id="count2-' + sourceId + '">' + (source.count2 || '0') + '</span>' +
-                                        '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count2\', 1, ' + source.isInitial + ')" class="count-btn">+</button>' +
-                                    '</div>' +
-                                '</div>' +
-                                '<div class="comment-section">' +
-                                    '<div class="comment-header">' +
-                                        '<span class="comment-label">Comment section by source</span>' +
-                                    '</div>' +
-                                    '<div class="comments">' +
-                                        commentsHtml +
-                                    '</div>' +
-                                    (source.isInitial ? '' : '<div class="add-comment">' +
-                                        '<input type="text" class="comment-input" placeholder="Add comment" id="comment-input-' + sourceId + '">' +
-                                        '<button onclick="addComment(\'' + claim.id + '\', \'' + sourceId + '\')" class="add-comment-btn">Add comment</button>' +
-                                    '</div>') +
-                                '</div>' +
-                            '</div>' +
-                        '</div>';
-                    }).join('');
+                        var linkDisplay = source.link || 'No link';
+                        
+                        sourcesHtml += '<div class="source-section" data-source-index="' + s + '">';
+                        sourcesHtml += '<div class="source-header">';
+                        sourcesHtml += '<span class="source-label">' + sourceLabel + '</span>';
+                        sourcesHtml += '</div>';
+                        sourcesHtml += '<div class="source-content">';
+                        sourcesHtml += '<div class="source-row">';
+                        sourcesHtml += '<span class="source-field-label">Link</span>';
+                        sourcesHtml += '<a href="' + linkDisplay + '" class="source-link" target="_blank">' + linkDisplay + '</a>';
+                        sourcesHtml += '</div>';
+                        sourcesHtml += '<div class="source-row count-row">';
+                        sourcesHtml += '<span class="source-field-label">Count</span>';
+                        sourcesHtml += '<div class="count-control">';
+                        sourcesHtml += '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count\', -1, ' + source.isInitial + ')" class="count-btn">-</button>';
+                        sourcesHtml += '<span class="source-count" id="count-' + sourceId + '">' + (source.count || '0') + '</span>';
+                        sourcesHtml += '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count\', 1, ' + source.isInitial + ')" class="count-btn">+</button>';
+                        sourcesHtml += '</div>';
+                        sourcesHtml += '</div>';
+                        sourcesHtml += '<div class="source-row count-row">';
+                        sourcesHtml += '<span class="source-field-label">Count</span>';
+                        sourcesHtml += '<div class="count-control">';
+                        sourcesHtml += '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count2\', -1, ' + source.isInitial + ')" class="count-btn">-</button>';
+                        sourcesHtml += '<span class="source-count" id="count2-' + sourceId + '">' + (source.count2 || '0') + '</span>';
+                        sourcesHtml += '<button onclick="updateCount(\'' + claim.id + '\', \'' + sourceId + '\', \'count2\', 1, ' + source.isInitial + ')" class="count-btn">+</button>';
+                        sourcesHtml += '</div>';
+                        sourcesHtml += '</div>';
+                        sourcesHtml += '<div class="comment-section">';
+                        sourcesHtml += '<div class="comment-header">';
+                        sourcesHtml += '<span class="comment-label">Comment section by source</span>';
+                        sourcesHtml += '</div>';
+                        sourcesHtml += '<div class="comments">';
+                        sourcesHtml += commentsHtml;
+                        sourcesHtml += '</div>';
+                        sourcesHtml += '<div class="add-comment">';
+                        sourcesHtml += '<input type="text" class="comment-input" placeholder="Add comment" id="comment-input-' + sourceId + '">';
+                        sourcesHtml += '<button onclick="addComment(\'' + claim.id + '\', \'' + sourceId + '\', ' + source.isInitial + ')" class="add-comment-btn">Add comment</button>';
+                        sourcesHtml += '</div>';
+                        sourcesHtml += '</div>';
+                        sourcesHtml += '</div>';
+                        sourcesHtml += '</div>';
+                    }
                 }
 
                 container.innerHTML = '<div class="claim-detail">' +
@@ -165,38 +168,45 @@
 
             function updateCount(claimId, sourceId, field, change, isInitial) {
                 try {
+                    var newValue = 0;
+                    
                     if (isInitial) {
                         var claim = getClaimById(claimId);
                         if (!claim) return;
                         
                         var currentValue = parseInt(claim[field]) || 0;
-                        var newValue = currentValue + change;
+                        newValue = currentValue + change;
+                        
                         if (newValue < 0) newValue = 0;
+                        if (newValue > 1) newValue = 1;
                         
                         var updates = {};
                         updates[field] = newValue.toString();
                         updateClaim(claimId, updates);
-                        
-                        var countElement = document.getElementById(field + '-' + sourceId);
-                        if (countElement) {
-                            countElement.textContent = newValue;
-                        }
                     } else {
                         var sources = getSourcesForClaim(claimId);
-                        var source = sources.find(function(s) { return s.id === sourceId; });
+                        var source = null;
+                        for (var i = 0; i < sources.length; i++) {
+                            if (sources[i].id === sourceId) {
+                                source = sources[i];
+                                break;
+                            }
+                        }
                         if (!source) return;
                         
                         var currentValue = parseInt(source[field]) || 0;
-                        var newValue = currentValue + change;
+                        newValue = currentValue + change;
+                        
                         if (newValue < 0) newValue = 0;
+                        if (newValue > 1) newValue = 1;
                         
                         source[field] = newValue.toString();
                         updateSource(sourceId, { [field]: newValue.toString() });
-                        
-                        var countElement = document.getElementById(field + '-' + sourceId);
-                        if (countElement) {
-                            countElement.textContent = newValue;
-                        }
+                    }
+                    
+                    var countElement = document.getElementById(field + '-' + sourceId);
+                    if (countElement) {
+                        countElement.textContent = newValue;
                     }
                 } catch (error) {
                     console.error('Error updating count:', error);
@@ -204,7 +214,7 @@
                 }
             }
 
-            function addComment(claimId, sourceId) {
+            function addComment(claimId, sourceId, isInitial) {
                 var input = document.getElementById('comment-input-' + sourceId);
                 var text = input.value.trim();
                 
@@ -214,7 +224,17 @@
                 }
 
                 try {
-                    addComment(claimId, sourceId, text);
+                    if (isInitial) {
+                        var claim = getClaimById(claimId);
+                        if (!claim) return;
+                        
+                        var comments = claim.comments || [];
+                        comments.push(text);
+                        updateClaim(claimId, { comments: comments });
+                    } else {
+                        addCommentToStorage(claimId, sourceId, text);
+                    }
+                    
                     input.value = '';
                     loadClaim(claimId);
                 } catch (error) {
@@ -223,13 +243,28 @@
                 }
             }
 
-            function deleteComment(commentId) {
+            function deleteComment(commentId, isInitial) {
                 if (!confirm('Delete this comment?')) {
                     return;
                 }
 
                 try {
-                    deleteComment(commentId);
+                    if (isInitial) {
+                        var claim = getClaimById(claimId);
+                        if (!claim) return;
+                        
+                        var comments = claim.comments || [];
+                        var newComments = [];
+                        for (var i = 0; i < comments.length; i++) {
+                            if (comments[i] !== commentId && comments[i].id !== commentId) {
+                                newComments.push(comments[i]);
+                            }
+                        }
+                        updateClaim(claimId, { comments: newComments });
+                    } else {
+                        deleteCommentFromStorage(commentId);
+                    }
+                    
                     loadClaim(claimId);
                 } catch (error) {
                     console.error('Error deleting comment:', error);

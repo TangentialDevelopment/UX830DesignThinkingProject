@@ -49,7 +49,12 @@ function saveClaimToStorage(claimData) {
     var claims = getClaims();
     var newClaim = {
         id: Date.now().toString(),
-        ...claimData,
+        claim: claimData.claim || claimData.text,
+        text: claimData.text || claimData.claim,
+        source: claimData.source || '',
+        count: '0',
+        count2: '0',
+        comments: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
@@ -60,37 +65,74 @@ function saveClaimToStorage(claimData) {
 
 function getClaimById(id) {
     var claims = getClaims();
-    return claims.find(function(claim) { return claim.id === id; });
+    for (var i = 0; i < claims.length; i++) {
+        if (claims[i].id === id) {
+            return claims[i];
+        }
+    }
+    return null;
 }
 
 function updateClaim(id, updates) {
     var claims = getClaims();
-    var index = claims.findIndex(function(claim) { return claim.id === id; });
-    if (index !== -1) {
-        claims[index] = { ...claims[index], ...updates, updatedAt: new Date().toISOString() };
-        saveClaims(claims);
-        return claims[index];
+    for (var i = 0; i < claims.length; i++) {
+        if (claims[i].id === id) {
+            if (updates.count !== undefined) {
+                var count = parseInt(updates.count);
+                if (count < 0) updates.count = '0';
+                if (count > 1) updates.count = '1';
+            }
+            if (updates.count2 !== undefined) {
+                var count2 = parseInt(updates.count2);
+                if (count2 < 0) updates.count2 = '0';
+                if (count2 > 1) updates.count2 = '1';
+            }
+            claims[i] = { ...claims[i], ...updates, updatedAt: new Date().toISOString() };
+            saveClaims(claims);
+            return claims[i];
+        }
     }
     return null;
 }
 
 function deleteClaim(id) {
     var claims = getClaims();
-    var filtered = claims.filter(function(claim) { return claim.id !== id; });
+    var filtered = [];
+    for (var i = 0; i < claims.length; i++) {
+        if (claims[i].id !== id) {
+            filtered.push(claims[i]);
+        }
+    }
     saveClaims(filtered);
     
     var sources = getSources();
-    var filteredSources = sources.filter(function(source) { return source.claimId !== id; });
+    var filteredSources = [];
+    for (var i = 0; i < sources.length; i++) {
+        if (sources[i].claimId !== id) {
+            filteredSources.push(sources[i]);
+        }
+    }
     saveSources(filteredSources);
     
     var comments = getComments();
-    var filteredComments = comments.filter(function(comment) { return comment.claimId !== id; });
+    var filteredComments = [];
+    for (var i = 0; i < comments.length; i++) {
+        if (comments[i].claimId !== id) {
+            filteredComments.push(comments[i]);
+        }
+    }
     saveComments(filteredComments);
 }
 
 function getSourcesForClaim(claimId) {
     var sources = getSources();
-    return sources.filter(function(source) { return source.claimId === claimId; });
+    var result = [];
+    for (var i = 0; i < sources.length; i++) {
+        if (sources[i].claimId === claimId) {
+            result.push(sources[i]);
+        }
+    }
+    return result;
 }
 
 function saveSourceToStorage(claimId, sourceData) {
@@ -101,6 +143,7 @@ function saveSourceToStorage(claimId, sourceData) {
         link: sourceData.link || sourceData,
         count: '0',
         count2: '0',
+        comments: [],
         createdAt: new Date().toISOString()
     };
     sources.push(newSource);
@@ -110,21 +153,38 @@ function saveSourceToStorage(claimId, sourceData) {
 
 function updateSource(id, updates) {
     var sources = getSources();
-    var index = sources.findIndex(function(source) { return source.id === id; });
-    if (index !== -1) {
-        sources[index] = { ...sources[index], ...updates };
-        saveSources(sources);
-        return sources[index];
+    for (var i = 0; i < sources.length; i++) {
+        if (sources[i].id === id) {
+            if (updates.count !== undefined) {
+                var count = parseInt(updates.count);
+                if (count < 0) updates.count = '0';
+                if (count > 1) updates.count = '1';
+            }
+            if (updates.count2 !== undefined) {
+                var count2 = parseInt(updates.count2);
+                if (count2 < 0) updates.count2 = '0';
+                if (count2 > 1) updates.count2 = '1';
+            }
+            sources[i] = { ...sources[i], ...updates };
+            saveSources(sources);
+            return sources[i];
+        }
     }
     return null;
 }
 
 function getCommentsForSource(sourceId) {
     var comments = getComments();
-    return comments.filter(function(comment) { return comment.sourceId === sourceId; });
+    var result = [];
+    for (var i = 0; i < comments.length; i++) {
+        if (comments[i].sourceId === sourceId) {
+            result.push(comments[i]);
+        }
+    }
+    return result;
 }
 
-function addComment(claimId, sourceId, text) {
+function addCommentToStorage(claimId, sourceId, text) {
     var comments = getComments();
     var newComment = {
         id: Date.now().toString() + '_comment',
@@ -138,9 +198,14 @@ function addComment(claimId, sourceId, text) {
     return newComment;
 }
 
-function deleteComment(id) {
+function deleteCommentFromStorage(id) {
     var comments = getComments();
-    var filtered = comments.filter(function(comment) { return comment.id !== id; });
+    var filtered = [];
+    for (var i = 0; i < comments.length; i++) {
+        if (comments[i].id !== id) {
+            filtered.push(comments[i]);
+        }
+    }
     saveComments(filtered);
 }
 
@@ -148,12 +213,17 @@ function searchClaims(query) {
     var claims = getClaims();
     if (!query) return claims;
     var q = query.toLowerCase();
-    return claims.filter(function(claim) {
+    var result = [];
+    for (var i = 0; i < claims.length; i++) {
+        var claim = claims[i];
         var claimMatch = claim.claim && claim.claim.toLowerCase().indexOf(q) !== -1;
         var textMatch = claim.text && claim.text.toLowerCase().indexOf(q) !== -1;
         var sourceMatch = claim.source && claim.source.toLowerCase().indexOf(q) !== -1;
-        return claimMatch || textMatch || sourceMatch;
-    });
+        if (claimMatch || textMatch || sourceMatch) {
+            result.push(claim);
+        }
+    }
+    return result;
 }
 
 initStorage();
@@ -167,6 +237,6 @@ window.getSourcesForClaim = getSourcesForClaim;
 window.saveSourceToStorage = saveSourceToStorage;
 window.updateSource = updateSource;
 window.getCommentsForSource = getCommentsForSource;
-window.addComment = addComment;
-window.deleteComment = deleteComment;
+window.addCommentToStorage = addCommentToStorage;
+window.deleteCommentFromStorage = deleteCommentFromStorage;
 window.searchClaims = searchClaims;
