@@ -131,7 +131,6 @@ function getSourcesForClaim(claimId) {
 
 function saveSourceToStorage(claimId, sourceData) {
     var sources = getSources();
-    // If sourceData is a string, use it as the link
     var link = typeof sourceData === 'string' ? sourceData : (sourceData.link || '');
     var newSource = {
         id: Date.now().toString() + '_source',

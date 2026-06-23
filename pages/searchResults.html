@@ -170,16 +170,14 @@
 
             window.deleteClaim = function(id) {
                 event.stopPropagation();
-                if (!confirm('Are you sure you want to delete this claim?')) {
-                    return;
-                }
-
-                try {
-                    deleteClaim(id);
-                    loadClaims();
-                } catch (error) {
-                    console.error('Error deleting claim:', error);
-                    alert('Error deleting claim. Please try again.');
+                if (confirm('Delete this claim?')) {
+                    try {
+                        deleteClaim(id);
+                        loadClaims();
+                    } catch (error) {
+                        console.error('Error deleting claim:', error);
+                        alert('Error deleting claim. Please try again.');
+                    }
                 }
             }
 
