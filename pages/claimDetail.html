@@ -94,7 +94,7 @@
                                 var commentId = comments[c].id || 'comment_' + c;
                                 commentsHtml += '<div class="comment-item">';
                                 commentsHtml += '<span class="comment-text">' + escapeHtml(commentText) + '</span>';
-                                commentsHtml += '<button onclick="event.stopPropagation(); deleteComment(\'' + claimId + '\', \'' + commentId + '\', ' + source.isInitial + ')" class="delete-comment-btn">x</button>';
+                                commentsHtml += '<button onclick="deleteComment(\'' + claimId + '\', \'' + commentId + '\', ' + source.isInitial + ', \'' + commentText + '\')" class="delete-comment-btn">x</button>';
                                 commentsHtml += '</div>';
                             }
                         } else {
@@ -235,7 +235,7 @@
                 }
             }
 
-            function deleteComment(claimId, commentId, isInitial) {
+            function deleteComment(claimId, commentId, isInitial, commentText) {
                 if (!confirm('Delete this comment?')) {
                     return;
                 }
@@ -249,8 +249,8 @@
                         var newComments = [];
                         for (var i = 0; i < comments.length; i++) {
                             var currentComment = comments[i];
-                            var currentId = currentComment.id || currentComment;
-                            if (currentId !== commentId) {
+                            var currentText = currentComment.text || currentComment;
+                            if (currentText !== commentText) {
                                 newComments.push(currentComment);
                             }
                         }
