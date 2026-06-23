@@ -172,7 +172,7 @@
                 event.stopPropagation();
                 if (confirm('Delete this claim?')) {
                     try {
-                        deleteClaim(id);
+                        window.deleteClaimFromStorage(id);
                         loadClaims();
                     } catch (error) {
                         console.error('Error deleting claim:', error);

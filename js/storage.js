@@ -89,7 +89,7 @@ function updateClaim(id, updates) {
     return null;
 }
 
-function deleteClaim(id) {
+function deleteClaimFromStorage(id) {
     var claims = getClaims();
     var filtered = [];
     for (var i = 0; i < claims.length; i++) {
@@ -221,7 +221,7 @@ window.getClaims = getClaims;
 window.getClaimById = getClaimById;
 window.saveClaimToStorage = saveClaimToStorage;
 window.updateClaim = updateClaim;
-window.deleteClaim = deleteClaim;
+window.deleteClaimFromStorage = deleteClaimFromStorage;
 window.getSourcesForClaim = getSourcesForClaim;
 window.saveSourceToStorage = saveSourceToStorage;
 window.updateSource = updateSource;
