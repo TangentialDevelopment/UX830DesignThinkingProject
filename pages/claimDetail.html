@@ -6,7 +6,6 @@
         <title>Claim Detail - Verifact</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="../css/index.css">
         <link rel="stylesheet" href="../css/claimDetail.css">
     </head>
     <body>
@@ -37,7 +36,7 @@
 
             function loadClaim(id) {
                 try {
-                    var claim = getClaimById(id);
+                    var claim = window.getClaimById(id);
                     
                     if (!claim) {
                         document.getElementById('claimContent').innerHTML = '<p class="error">Claim not found.</p>';
@@ -54,7 +53,7 @@
             function displayClaim(claim) {
                 var container = document.getElementById('claimContent');
                 
-                var sources = getSourcesForClaim(claim.id);
+                var sources = window.getSourcesForClaim(claim.id);
                 
                 var allSources = [];
                 
@@ -84,7 +83,7 @@
                         if (source.isInitial) {
                             comments = source.comments || [];
                         } else {
-                            comments = getCommentsForSource(source.id);
+                            comments = window.getCommentsForSource(source.id);
                         }
                         
                         var commentsHtml = '';
@@ -94,14 +93,13 @@
                                 var commentId = comments[c].id || 'comment_' + c;
                                 commentsHtml += '<div class="comment-item">';
                                 commentsHtml += '<span class="comment-text">' + escapeHtml(commentText) + '</span>';
-                                commentsHtml += '<button onclick="deleteComment(\'' + commentId + '\', ' + source.isInitial + ')" class="delete-comment-btn">x</button>';
+                                commentsHtml += '<button onclick="event.stopPropagation(); deleteComment(\'' + claimId + '\', \'' + commentId + '\', ' + source.isInitial + ')" class="delete-comment-btn">x</button>';
                                 commentsHtml += '</div>';
                             }
                         } else {
                             commentsHtml = '<p class="no-comments">No comments yet.</p>';
                         }
                         
-                        // Get the link - handle both string and object
                         var linkDisplay = 'No link';
                         if (source.link) {
                             linkDisplay = source.link;
@@ -166,7 +164,7 @@
                     var newValue = 0;
                     
                     if (isInitial) {
-                        var claim = getClaimById(claimId);
+                        var claim = window.getClaimById(claimId);
                         if (!claim) return;
                         
                         var currentValue = parseInt(claim.reliabilityScore) || 0;
@@ -175,9 +173,9 @@
                         if (newValue < 0) newValue = 0;
                         if (newValue > 1) newValue = 1;
                         
-                        updateClaim(claimId, { reliabilityScore: newValue.toString() });
+                        window.updateClaim(claimId, { reliabilityScore: newValue.toString() });
                     } else {
-                        var sources = getSourcesForClaim(claimId);
+                        var sources = window.getSourcesForClaim(claimId);
                         var source = null;
                         for (var i = 0; i < sources.length; i++) {
                             if (sources[i].id === sourceId) {
@@ -194,7 +192,7 @@
                         if (newValue > 1) newValue = 1;
                         
                         source.reliabilityScore = newValue.toString();
-                        updateSource(sourceId, { reliabilityScore: newValue.toString() });
+                        window.updateSource(sourceId, { reliabilityScore: newValue.toString() });
                     }
                     
                     var countElement = document.getElementById('score-' + sourceId);
@@ -218,14 +216,14 @@
 
                 try {
                     if (isInitial) {
-                        var claim = getClaimById(claimId);
+                        var claim = window.getClaimById(claimId);
                         if (!claim) return;
                         
                         var comments = claim.comments || [];
                         comments.push(text);
-                        updateClaim(claimId, { comments: comments });
+                        window.updateClaim(claimId, { comments: comments });
                     } else {
-                        addCommentToStorage(claimId, sourceId, text);
+                        window.addCommentToStorage(claimId, sourceId, text);
                     }
                     
                     input.value = '';
@@ -236,26 +234,28 @@
                 }
             }
 
-            function deleteComment(commentId, isInitial) {
+            function deleteComment(claimId, commentId, isInitial) {
                 if (!confirm('Delete this comment?')) {
                     return;
                 }
 
                 try {
                     if (isInitial) {
-                        var claim = getClaimById(claimId);
+                        var claim = window.getClaimById(claimId);
                         if (!claim) return;
                         
                         var comments = claim.comments || [];
                         var newComments = [];
                         for (var i = 0; i < comments.length; i++) {
-                            if (comments[i] !== commentId && comments[i].id !== commentId) {
-                                newComments.push(comments[i]);
+                            var currentComment = comments[i];
+                            var currentId = currentComment.id || currentComment;
+                            if (currentId !== commentId) {
+                                newComments.push(currentComment);
                             }
                         }
-                        updateClaim(claimId, { comments: newComments });
+                        window.updateClaim(claimId, { comments: newComments });
                     } else {
-                        deleteCommentFromStorage(commentId);
+                        window.deleteCommentFromStorage(commentId);
                     }
                     
                     loadClaim(claimId);

@@ -6,7 +6,6 @@
         <title>Search Results - Verifact</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="../css/index.css">
         <link rel="stylesheet" href="../css/searchResults.css">
     </head>
     <body>
@@ -63,11 +62,11 @@
                 loadingIndicator.style.display = 'block';
                 
                 setTimeout(function() {
-                    var claims = getClaims();
+                    var claims = window.getClaims();
                     loadingIndicator.style.display = 'none';
                     
                     if (currentQuery) {
-                        var filtered = searchClaims(currentQuery);
+                        var filtered = window.searchClaims(currentQuery);
                         displayClaims(filtered);
                     } else {
                         displayClaims(claims);
@@ -154,7 +153,7 @@
                 }
 
                 try {
-                    updateClaim(id, {
+                    window.updateClaim(id, {
                         claim: newText,
                         text: newText,
                         source: newSource
